@@ -46,6 +46,8 @@ public class PixelSensorExample : MonoBehaviour
 
     private void Awake()
     {
+        // ImageSaver.SaveTestFile();
+        //
         pixelSensorFeature = OpenXRSettings.Instance.GetFeature<MagicLeapPixelSensorFeature>();
         if (pixelSensorFeature == null || !pixelSensorFeature.enabled)
         {
