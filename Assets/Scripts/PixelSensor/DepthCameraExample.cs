@@ -12,7 +12,7 @@ public class DepthCameraExample : MonoBehaviour
 {
 
     [Header("General Configuration")]
-    //public DepthStreamVisualizer streamVisualizer;
+    public DepthStreamVisualizer streamVisualizer;
 
     [Tooltip("If Tue will return a raw depth image. If False will return depth32")]
     public bool UseRawDepth;
@@ -238,7 +238,7 @@ public class DepthCameraExample : MonoBehaviour
         Quaternion frameRotation = pixelSensorFeature.GetSensorFrameRotation(sensorId.Value);
 
         // Initialize Stream ...
-        // streamVisualizer.Initialize(stream,frameRotation, pixelSensorFeature, sensorId.Value);
+        streamVisualizer.Initialize(targetStream,frameRotation, pixelSensorFeature, sensorId.Value);
 
         while (pixelSensorFeature.GetSensorStatus(sensorId.Value) ==
                PixelSensorStatus.Started)
@@ -249,20 +249,20 @@ public class DepthCameraExample : MonoBehaviour
                         Allocator.Temp, shouldFlipTexture: true))
                 {
                     // Process Frames ...
-                    // streamVisualizer.ProcessFrame(frame);
+                    streamVisualizer.ProcessFrame(frame);
 
                     var confidenceMetadata = metaData
                         .OfType<PixelSensorDepthConfidenceBuffer>().FirstOrDefault();
                     if (confidenceMetadata != null)
                     {
-                        // streamVisualizer.ProcessDepthConfidenceData(in confidenceMetadata);
+                        streamVisualizer.ProcessDepthConfidenceData(in confidenceMetadata);
 
 
                         var flagMetadata = metaData.OfType<PixelSensorDepthFlagBuffer>()
                             .FirstOrDefault();
                         if (flagMetadata != null)
                         {
-                            // streamVisualizer.ProcessDepthFlagData(in flagMetadata);
+                            streamVisualizer.ProcessDepthFlagData(in flagMetadata);
                         }
                     }
                 }

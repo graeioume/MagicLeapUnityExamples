@@ -580,6 +580,116 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 208343796}
   m_SourcePrefab: {fileID: 100100000, guid: 2ad7d02c3ee2a447abc9de300646685d, type: 3}
+--- !u!1 &621236906
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 621236907}
+  - component: {fileID: 621236910}
+  - component: {fileID: 621236909}
+  - component: {fileID: 621236908}
+  m_Layer: 5
+  m_Name: Plane
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &621236907
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621236906}
+  m_LocalRotation: {x: 0, y: -0.70710677, z: 0.70710677, w: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -151.5}
+  m_LocalScale: {x: 60.05, y: 60.05, z: 60.05}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 1615809904}
+  m_LocalEulerAnglesHint: {x: 90, y: -90, z: 90}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!64 &621236908
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621236906}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &621236909
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621236906}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 2d00c8fd043d49e46a525b9bc67ea4cd, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &621236910
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621236906}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &633351246
 GameObject:
   m_ObjectHideFlags: 0
@@ -721,7 +831,7 @@ PrefabInstance:
     - target: {fileID: 2577321838026604676, guid: e11acd7e824adcc43a4715c4f5daa2ba,
         type: 3}
       propertyPath: m_Text
-      value: Pixel Sensor
+      value: Pixel Sensors
       objectReference: {fileID: 0}
     - target: {fileID: 2643513138343310103, guid: e11acd7e824adcc43a4715c4f5daa2ba,
         type: 3}
@@ -796,8 +906,20 @@ PrefabInstance:
     - target: {fileID: 3638083915130247541, guid: e11acd7e824adcc43a4715c4f5daa2ba,
         type: 3}
       propertyPath: m_Text
-      value: "This example demonstrates \n\nThis feature requires that you grant
-        the following permission(s):\n- "
+      value: 'This example demonstrates the various types of pixel sensor cameras.
+        Select a pixel sensor type from the dropdown below to view it. A visualizer
+        will appear on screen once the sensor is selected.
+
+
+        This feature
+        requires that you grant the following permission(s):
+
+        - android.permission.CAMERA
+
+        -
+        com.magicleap.permission.DEPTH_CAMERA
+
+        - com.magicleap.permission.EYE_CAMERA'
       objectReference: {fileID: 0}
     - target: {fileID: 3981727701387534120, guid: e11acd7e824adcc43a4715c4f5daa2ba,
         type: 3}
@@ -920,10 +1042,7 @@ PrefabInstance:
     - target: {fileID: 5351382177260800096, guid: e11acd7e824adcc43a4715c4f5daa2ba,
         type: 3}
       propertyPath: m_Text
-      value: '- Use Trigger to shoot a ball to demonstrate physics.
-
-        - Use
-        Bumper to cycle between different settings.'
+      value: Select a pixel sensor type from the dropdown.
       objectReference: {fileID: 0}
     - target: {fileID: 6069143674600871185, guid: e11acd7e824adcc43a4715c4f5daa2ba,
         type: 3}
@@ -1043,11 +1162,19 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 7110473517475583366, guid: e11acd7e824adcc43a4715c4f5daa2ba,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 621236907}
     - targetCorrespondingSourceObject: {fileID: 517868799280914536, guid: e11acd7e824adcc43a4715c4f5daa2ba,
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1499602663}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 741950065852524832, guid: e11acd7e824adcc43a4715c4f5daa2ba,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1615809910}
   m_SourcePrefab: {fileID: 100100000, guid: e11acd7e824adcc43a4715c4f5daa2ba, type: 3}
 --- !u!224 &685605692 stripped
 RectTransform:
@@ -1254,6 +1381,7 @@ GameObject:
   - component: {fileID: 871066119}
   - component: {fileID: 871066120}
   - component: {fileID: 871066121}
+  - component: {fileID: 871066122}
   m_Layer: 0
   m_Name: Example
   m_TagString: Untagged
@@ -1304,10 +1432,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5ae63d8e1e0d4b4ea80be7b4ffab081, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  streamVisualizer: {fileID: 871066122}
   UseRawDepth: 1
-  DepthRange: 0.2
+  DepthRange: 5
   SRUpdateRate: 30
-  LRUpdateRate: 5
+  LRUpdateRate: 1
+--- !u!114 &871066122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 871066118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d52ded57ab364d6ca67142f74e23d5b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TargetRenderer: {fileID: 621236909}
+  DepthMaterial: {fileID: 2100000, guid: 2d00c8fd043d49e46a525b9bc67ea4cd, type: 2}
+  currentDepthMode: 0
 --- !u!1 &1055813477
 GameObject:
   m_ObjectHideFlags: 0
@@ -1649,6 +1793,60 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1611102536}
   m_CullTransparentMesh: 1
+--- !u!1 &1615809903 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 741950065852524832, guid: e11acd7e824adcc43a4715c4f5daa2ba,
+    type: 3}
+  m_PrefabInstance: {fileID: 685605691}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &1615809904 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 7110473517475583366, guid: e11acd7e824adcc43a4715c4f5daa2ba,
+    type: 3}
+  m_PrefabInstance: {fileID: 685605691}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &1615809910
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1615809903}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &1624797597
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,16 +1,18 @@
 ﻿using System;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 
 public static class ImageSaver
 {
 
-    public static void SaveImage(byte[] fileData)
+    public static void SaveImage(byte[] fileData, string filename)
     {
         try
         {
             // Application.persistentDataPath path is --> /storage/emulated/0/Android/data/com.magicleap.unity.examples/files/
-            var strDataPath = Path.Combine(Application.persistentDataPath, "FILENAME.FMT");
+            var strDataPath = Path.Combine(Application.persistentDataPath, "img", filename);
+            // ImageConversion.EncodeArrayToPNG(data, GraphicsFormat.R8G8B8A8_UInt8, w, h);
             File.WriteAllBytes(strDataPath, fileData);
         }
         catch (Exception ex)
