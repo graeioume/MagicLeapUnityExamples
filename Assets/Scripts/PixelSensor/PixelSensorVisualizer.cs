@@ -148,6 +148,7 @@ public class PixelSensorVisualizer : MonoBehaviour
                 }
                 ArrayPool<byte>.Shared.Return(byteArray, true);
                 targetTexture.Apply();
+                Debug.Log($"frameType: {frameType}");
                 break;
             }
             case PixelSensorFrameType.Yuv420888:
