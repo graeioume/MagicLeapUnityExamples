@@ -5,13 +5,13 @@ using UnityEngine;
 public static class ImageSaver
 {
 
-    public static void SaveImage()
+    public static void SaveImage(byte[] fileData)
     {
         try
         {
             // Application.persistentDataPath path is --> /storage/emulated/0/Android/data/com.magicleap.unity.examples/files/
             var strDataPath = Path.Combine(Application.persistentDataPath, "FILENAME.FMT");
-            File.WriteAllText(strDataPath, "Hello world");
+            File.WriteAllBytes(strDataPath, fileData);
         }
         catch (Exception ex)
         {
