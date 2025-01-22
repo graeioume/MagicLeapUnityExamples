@@ -34,7 +34,6 @@ public class DepthStreamVisualizer : MonoBehaviour
 
     public DepthMode currentDepthMode = DepthMode.Depth;
 
-    // Start is called before the first frame update
     void Start()
     {
         metadataTextureKey = Shader.PropertyToID("_MetadataTex");
@@ -77,52 +76,41 @@ public class DepthStreamVisualizer : MonoBehaviour
         }
     }
 
-    public void ProcessFrame(in PixelSensorFrame frame)
+    public Texture2D ProcessFrame(in PixelSensorFrame frame)
     {
         if (!frame.IsValid || TargetRenderer == null || frame.Planes.Length == 0)
-        {
-            return;
-        }
+			return null;
 
-        // You can obtain the capture time as well. Note it is returned as a long and needs to be converted.
-        // ie : DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
-
-        if (targetTexture == null)
+		// You can obtain the capture time as well. Note it is returned as a long and needs to be converted.
+		// ie : DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
+		if (targetTexture == null)
         {
             var frameType = frame.FrameType;
             ref var plane = ref frame.Planes[0];
             targetTexture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RFloat, false);
+
             var materialToUse = DepthMaterial;
             TargetRenderer.material = materialToUse;
             TargetRenderer.material.mainTexture = targetTexture;
-            UpdateMaterialParameters();
-        }
-        byte[] png = targetTexture.EncodeToPNG();
-        //             byte[] png = ImageConversion.EncodeArrayToPNG(frame.Planes[0].ByteData, GraphicsFormat.R32SFloat, (int)frame.Planes[0].Width, (int)frame.Planes[0].Height);
-        ImageSaver.SaveImage(png, $"{Time.frameCount}.png"); // {DateTime.Now.Ticks}_
-        
+			TargetRenderer.material.SetFloat(maxDepthKey, maxDepth);
+			TargetRenderer.material.SetFloat(minDepthKey, minDepth);
+			TargetRenderer.material.SetInt(depthBufferKey, (int)currentDepthMode);
+			TargetRenderer.material.SetTexture(depthFlagTextureKey, depthFlagColorKeyTexture);
+			TargetRenderer.material.SetTexture(metadataTextureKey, Texture2D.whiteTexture);
+		}
+       
         targetTexture.LoadRawTextureData(frame.Planes[0].ByteData);
         targetTexture.Apply();
+        return targetTexture;
     }
 
-    private void UpdateMaterialParameters()
-    {
-        TargetRenderer.material.SetFloat(maxDepthKey, maxDepth);
-        TargetRenderer.material.SetFloat(minDepthKey, minDepth);
-        TargetRenderer.material.SetInt(depthBufferKey, (int)currentDepthMode);
-        TargetRenderer.material.SetTexture(depthFlagTextureKey, depthFlagColorKeyTexture);
-        TargetRenderer.material.SetTexture(metadataTextureKey, Texture2D.whiteTexture);
-    }
-
-    public void ProcessDepthConfidenceData(in PixelSensorDepthConfidenceBuffer confidenceBuffer)
+    public Texture2D ProcessDepthConfidenceData(in PixelSensorDepthConfidenceBuffer confidenceBuffer)
     {
         var frame = confidenceBuffer.Frame;
         if (!frame.IsValid || TargetRenderer == null || frame.Planes.Length == 0)
-        {
-            return;
-        }
+			return null;
 
-        if (depthConfidenceTexture == null)
+		if (depthConfidenceTexture == null)
         {
             ref var plane = ref frame.Planes[0];
             depthConfidenceTexture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RFloat, false);
@@ -131,17 +119,16 @@ public class DepthStreamVisualizer : MonoBehaviour
 
         depthConfidenceTexture.LoadRawTextureData(frame.Planes[0].ByteData);
         depthConfidenceTexture.Apply();
+        return depthConfidenceTexture;
     }
 
-    public void ProcessDepthFlagData(in PixelSensorDepthFlagBuffer flagBuffer)
+    public Texture2D ProcessDepthFlagData(in PixelSensorDepthFlagBuffer flagBuffer)
     {
         var frame = flagBuffer.Frame;
         if (!frame.IsValid || TargetRenderer == null || frame.Planes.Length == 0)
-        {
-            return;
-        }
+            return null;
 
-        if (depthFlagTexture == null)
+		if (depthFlagTexture == null)
         {
             ref var plane = ref frame.Planes[0];
             depthFlagTexture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RFloat, false);
@@ -150,22 +137,9 @@ public class DepthStreamVisualizer : MonoBehaviour
 
         depthFlagTexture.LoadRawTextureData(frame.Planes[0].ByteData);
         depthFlagTexture.Apply();
+        return depthFlagTexture;
     }
 
-    private void ReadDepthFlag(){
-        var pixels = depthFlagTexture.GetPixels();
-        
-        for (int i = 0; i < pixels.Length; i++)
-        {
-            // Extract the red channel as it holds the flag data
-            float flagValue = pixels[i].r;
-            int flags = Mathf.FloorToInt(flagValue * 255);
-
-            // Process the flag value to determine what flags are set
-            //ProcessFlag((PixelSensorDepthFlags)flags, i);
-        }
-    }
-    
     // Create a texture that has the keys for each of the depth flags. This will be applied in the material
     private void InitializeDepthFlagColorKey()
     {
@@ -203,4 +177,18 @@ public class DepthStreamVisualizer : MonoBehaviour
         depthFlagColorKeyTexture.Apply();
     }
 
+	private void ReadDepthFlag()
+	{
+		var pixels = depthFlagTexture.GetPixels();
+
+		for (int i = 0; i < pixels.Length; i++)
+		{
+			// Extract the red channel as it holds the flag data
+			float flagValue = pixels[i].r;
+			int flags = Mathf.FloorToInt(flagValue * 255);
+
+			// Process the flag value to determine what flags are set
+			//ProcessFlag((PixelSensorDepthFlags)flags, i);
+		}
+	}
 }
