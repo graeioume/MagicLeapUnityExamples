@@ -24,7 +24,7 @@ public static class ImageSaver
 			currentFrame = frameCount;
 
 			
-			ZipArchiveEntry entry = currentZip.CreateEntry("creation_pose.data", System.IO.Compression.CompressionLevel.Fastest);
+			ZipArchiveEntry entry = currentZip.CreateEntry("creation_pose.txt", System.IO.Compression.CompressionLevel.NoCompression);
 			using (Stream es = entry.Open())
 			using (StreamWriter sw = new StreamWriter(es))
 				sw.WriteLine($"Creation: {sensorPose.position} | {sensorPose.rotation}");
@@ -57,15 +57,14 @@ public static class ImageSaver
 		{
             byte[] data = texture.GetRawTextureData();
 
-			ZipArchiveEntry entry = currentZip.CreateEntry($"{prefix}.data", System.IO.Compression.CompressionLevel.Fastest);
+			ZipArchiveEntry entry = currentZip.CreateEntry($"{prefix}.bytes", System.IO.Compression.CompressionLevel.Fastest);
 			using (Stream es = entry.Open())
-			using (StreamWriter sw = new StreamWriter(es))
-				sw.Write(data);
+				es.Write(data);
 
-			entry = currentZip.CreateEntry($"{prefix}_pose.data");
+			entry = currentZip.CreateEntry($"{prefix}_pose.txt", System.IO.Compression.CompressionLevel.NoCompression);
 			using (Stream es = entry.Open())
 			using (StreamWriter sw = new StreamWriter(es))
-				sw.WriteLine($"{prefix}: {sensorPose.position} | {sensorPose.rotation}");
+				sw.WriteLine($"{prefix}: {sensorPose.position} | {sensorPose.rotation} | {texture.width} | {texture.height} | {texture.format}");
 
 			Console.WriteLine($" -{prefix} appended");
 		}
