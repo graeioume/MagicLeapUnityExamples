@@ -10,7 +10,6 @@ using MagicLeap.OpenXR.Features.PixelSensors;
 using System;
 using System.IO.Compression;
 using System.IO;
-using static SensorNameUtility;
 using Unity.XR.CoreUtils.Collections;
 using UnityEngine.InputSystem;
 using static UnityEngine.SpatialTracking.TrackedPoseDriver;
