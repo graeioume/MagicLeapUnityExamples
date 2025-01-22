@@ -1380,6 +1380,7 @@ GameObject:
   m_Component:
   - component: {fileID: 871066119}
   - component: {fileID: 871066120}
+  - component: {fileID: 871066123}
   - component: {fileID: 871066121}
   - component: {fileID: 871066122}
   m_Layer: 0
@@ -1427,7 +1428,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 871066118}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c5ae63d8e1e0d4b4ea80be7b4ffab081, type: 3}
   m_Name: 
@@ -1452,6 +1453,23 @@ MonoBehaviour:
   TargetRenderer: {fileID: 621236909}
   DepthMaterial: {fileID: 2100000, guid: 2d00c8fd043d49e46a525b9bc67ea4cd, type: 2}
   currentDepthMode: 0
+--- !u!114 &871066123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 871066118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d1e04d354aef574e81eccf3708bc065, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  streamVisualizer: {fileID: 871066122}
+  UseRawDepth: 0
+  DepthRange: 0.46
+  SRUpdateRate: 30
+  LRUpdateRate: 5
 --- !u!1 &1055813477
 GameObject:
   m_ObjectHideFlags: 0
