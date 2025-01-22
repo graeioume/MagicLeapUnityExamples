@@ -61,9 +61,8 @@ public class CombinedExample : MonoBehaviour
 
 	    Permissions.RequestPermissions(allRequiredPermissions,
             (string permission) => { // granted
-                if (permission == Permissions.DepthCamera)
-                    InitDepthSensor();
-            },
+				InitSensors();
+			},
             (string permission) =>{ // denied
                 Debug.LogError($"Permission {permission} not granted. Example script will not work.");
                 enabled = false;
@@ -75,7 +74,7 @@ public class CombinedExample : MonoBehaviour
         );
     }
 
-    private void InitDepthSensor()
+    private void InitSensors()
     {
         foreach (PixelSensorId sensor in pixelSensorFeature.GetSupportedSensors())
         {
