@@ -11,7 +11,7 @@ public static class ImageSaver
 	private static ZipArchive currentZip;
 	private static int currentFrame = -1;
 
-    public static void InitNewFrame(int frameCount, float frameTime, DateTimeOffset deviceTime, Pose sensorPose)
+    public static void InitNewFrame(int frameCount, float frameTime, DateTimeOffset deviceTime)
     {
 		if (currentZip != null || currentFile != null || frameCount != currentFrame)
 			CloseLastFile();
@@ -22,13 +22,6 @@ public static class ImageSaver
 			currentFile = new FileStream(dataPath, FileMode.Create);
 			currentZip = new ZipArchive(currentFile, ZipArchiveMode.Create, leaveOpen: true);
 			currentFrame = frameCount;
-
-			
-			ZipArchiveEntry entry = currentZip.CreateEntry("creation_pose.txt", System.IO.Compression.CompressionLevel.NoCompression);
-			using (Stream es = entry.Open())
-			using (StreamWriter sw = new StreamWriter(es))
-				sw.WriteLine($"Creation: {sensorPose.position} | {sensorPose.rotation}");
-
 			Console.WriteLine($"{dataPath} created");
 		}
 		catch (Exception ex)
