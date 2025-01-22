@@ -180,7 +180,6 @@ public class DepthStreamVisualizer : MonoBehaviour
 	private void ReadDepthFlag()
 	{
 		var pixels = depthFlagTexture.GetPixels();
-
 		for (int i = 0; i < pixels.Length; i++)
 		{
 			// Extract the red channel as it holds the flag data

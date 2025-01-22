@@ -57,7 +57,7 @@ public static class ImageSaver
 		{
             byte[] data = texture.GetRawTextureData();
 
-			ZipArchiveEntry entry = currentZip.CreateEntry($"{prefix}.bytes", System.IO.Compression.CompressionLevel.Fastest);
+			ZipArchiveEntry entry = currentZip.CreateEntry($"{prefix}.bytes", System.IO.Compression.CompressionLevel.NoCompression);
 			using (Stream es = entry.Open())
 				es.Write(data);
 

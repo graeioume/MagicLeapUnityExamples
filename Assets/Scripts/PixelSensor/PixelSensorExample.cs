@@ -75,7 +75,7 @@ public class PixelSensorExample : MonoBehaviour
             stringBuilder.AppendLine("No sensor selected");
         }
 
-        foreach (var sensor in activeSensors)
+        foreach (SensorInfo sensor in activeSensors)
         {
             if (!sensor.ShouldFetchData)
             {
@@ -93,7 +93,7 @@ public class PixelSensorExample : MonoBehaviour
     {
         void AddToTable(PixelSensorType key, PixelSensorId sensorId)
         {
-            if (sensorIdTable.TryGetValue(key, out var sensorList))
+            if (sensorIdTable.TryGetValue(key, out List<PixelSensorId> sensorList))
             {
                 sensorList.Add(sensorId);
             }
@@ -109,7 +109,7 @@ public class PixelSensorExample : MonoBehaviour
         availableSensors = pixelSensorFeature.GetSupportedSensors();
 
 
-        foreach (var sensor in availableSensors)
+        foreach (PixelSensorId sensor in availableSensors)
         {
             if (sensor.SensorName.Contains("World"))
             {
@@ -157,7 +157,7 @@ public class PixelSensorExample : MonoBehaviour
 
     private void StopActiveSensors()
     {
-        foreach (var sensor in activeSensors)
+        foreach (SensorInfo sensor in activeSensors)
         {
             sensor.Dispose();
         }
@@ -180,15 +180,15 @@ public class PixelSensorExample : MonoBehaviour
             return;
         }
 
-        var sensorIndex = index - 1;
-        var newSensorType = availableSensorTypes[sensorIndex];
+		int sensorIndex = index - 1;
+		PixelSensorType newSensorType = availableSensorTypes[sensorIndex];
         //If sensors were created :
         StartCoroutine(CreateSensorAfterPermission(newSensorType));
     }
 
     private string NeededPermission(PixelSensorType sensorType)
     {
-        var result = sensorType switch
+		string result = sensorType switch
         {
             PixelSensorType.Depth => Permissions.DepthCamera,
             PixelSensorType.World or PixelSensorType.Picture => Permission.Camera,
@@ -200,15 +200,15 @@ public class PixelSensorExample : MonoBehaviour
 
     private IEnumerator CreateSensorAfterPermission(PixelSensorType newSensorType)
     {
-        var neededPermission = NeededPermission(newSensorType);
+		string neededPermission = NeededPermission(newSensorType);
         if (!grantedPermissions.Contains(neededPermission))
-        {
-            Permissions.RequestPermission(neededPermission, OnPermissionGranted, OnPermissionDenied);
-        }
-        yield return new WaitUntil(() => grantedPermissions.Contains(neededPermission));
-        sensorTypesDropdown.interactable = false;
+			Permissions.RequestPermission(neededPermission, OnPermissionGranted, OnPermissionDenied);
+
+		yield return new WaitUntil(() => grantedPermissions.Contains(neededPermission));
+
         //Permission granted, so now we can create the associated sensors:
-        if (!sensorIdTable.TryGetValue(newSensorType, out var sensors))
+        sensorTypesDropdown.interactable = false;
+        if (!sensorIdTable.TryGetValue(newSensorType, out List<PixelSensorId> sensors))
         {
             sensorTypesDropdown.interactable = true;
             Debug.LogError($"The given {newSensorType} does not have any associated sensors");
@@ -218,15 +218,15 @@ public class PixelSensorExample : MonoBehaviour
         visualizers.Reset();
         visualizers.SetCount(sensors.Count);
         Assert.AreEqual(visualizers.ActiveVisualizers.Count, sensors.Count);
-        for (var i = 0; i < sensors.Count; i++)
+        for (int i = 0; i < sensors.Count; i++)
         {
-            var visualizer = visualizers.ActiveVisualizers[i];
-            var sensorInfo = new SensorInfo(pixelSensorFeature, visualizer, sensors[i]);
+			PixelSensorVisualizer visualizer = visualizers.ActiveVisualizers[i];
+			SensorInfo sensorInfo = new SensorInfo(pixelSensorFeature, visualizer, sensors[i]);
             activeSensors.Add(sensorInfo);
         }
 
         //Create each sensor
-        foreach (var sensor in activeSensors)
+        foreach (SensorInfo sensor in activeSensors)
         {
             if (!sensor.CreateSensor())
             {
@@ -239,13 +239,13 @@ public class PixelSensorExample : MonoBehaviour
         }
 
         //Configure sensor
-        foreach (var sensor in activeSensors)
+        foreach (SensorInfo sensor in activeSensors)
         {
             if (!sensor.Created)
             {
                 continue;
             }
-            var configureResult = sensor.ConfigureSensorRoutine();
+			PixelSensorAsyncOperationResult configureResult = sensor.ConfigureSensorRoutine();
             yield return configureResult;
             if (!configureResult.DidOperationSucceed)
             {
@@ -257,14 +257,14 @@ public class PixelSensorExample : MonoBehaviour
         }
         
         //Start sensor
-        foreach (var sensor in activeSensors)
+        foreach (SensorInfo sensor in activeSensors)
         {
             if (!sensor.Configured)
             {
                 continue;
             }
 
-            var startSensorResult = sensor.StartSensorRoutine();
+			PixelSensorAsyncOperationResult startSensorResult = sensor.StartSensorRoutine();
             yield return startSensorResult;
             if (!startSensorResult.DidOperationSucceed)
             {
@@ -276,7 +276,7 @@ public class PixelSensorExample : MonoBehaviour
         //Wait for a brief moment to ensure the sensor is ready
         yield return new WaitForSeconds(2);
         visualizers.EnableVisualizer(true);
-        foreach (var sensor in activeSensors)
+        foreach (SensorInfo sensor in activeSensors)
         {
             if (sensor.Started)
             {
@@ -326,7 +326,7 @@ public class PixelSensorExample : MonoBehaviour
 
         public void UpdateVisualizer(StringBuilder frameDataText)
         {
-            if (!PixelSensorFeature.GetSensorData(SensorId, ConfiguredStream, out var frame, out _, Allocator.Temp))
+            if (!PixelSensorFeature.GetSensorData(SensorId, ConfiguredStream, out PixelSensorFrame frame, out _, Allocator.Temp))
             {
                 return;
             }
