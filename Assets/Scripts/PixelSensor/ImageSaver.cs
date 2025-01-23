@@ -59,4 +59,32 @@ public static class ImageSaver
 			Debug.LogWarning($"Error writing {prefix} sensor: {ex}");
 		}
 	}
+
+	public static void ClearImgFolder()
+	{
+		try
+		{
+			// Build the full path to the img folder
+			string imgFolderPath = Path.Combine(Application.persistentDataPath, "img");
+
+			// Check if the folder exists
+			if (Directory.Exists(imgFolderPath))
+			{
+				// Delete it recursively
+				Directory.Delete(imgFolderPath, recursive: true);
+				Debug.Log($"Deleted folder and all contents at: {imgFolderPath}");
+			}
+			else
+			{
+				Debug.Log($"Folder does not exist at: {imgFolderPath}");
+			}
+
+			Directory.CreateDirectory(imgFolderPath);
+			Debug.Log("Creating img folder");
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"Error while deleting folder: {ex.Message}");
+		}
+	}
 }

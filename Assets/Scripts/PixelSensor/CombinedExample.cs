@@ -39,6 +39,7 @@ public class CombinedExample : MonoBehaviour
 	
     void Start()
     {
+		ImageSaver.ClearImgFolder();
 		LogsSaver.Initialize();
 
 		Debug.Log($"CombinedExample Start frame: {Time.frameCount} go: {gameObject}");
@@ -104,16 +105,18 @@ public class CombinedExample : MonoBehaviour
 				TryInitializeWorldSensor();
 		};
 
-		TryInitializeRGBSensor();
-		TryInitializeDepthSensor();
-		TryInitializeWorldSensor();
+		if (rgbSensorID.HasValue)
+			TryInitializeRGBSensor();
+		if (depthSensorID.HasValue)
+			TryInitializeDepthSensor();
+		if (worldSensorID.HasValue)
+			TryInitializeWorldSensor();
 	}
 
 	private void TryInitializeRGBSensor()
     {
 		Debug.Log($"CombinedExample TryInitializeRGBSensor");
-		if (!rgbSensorID.HasValue || pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) !=
-			PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(rgbSensorID.Value))
+		if (pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(rgbSensorID.Value))
 		{
 			Debug.LogWarning("Failed to create RGB sensor. Will retry when it becomes available.");
 			rgbSensorID = null;
@@ -131,8 +134,11 @@ public class CombinedExample : MonoBehaviour
 
 		rgbTextures = new Texture2D[streamCount];
 		configuredRGBStreams.Clear();
-		for (uint i = 0; i < streamCount; i++)
-			configuredRGBStreams.Add(i);
+		configuredRGBStreams.Add(1); // CV stream
+
+		pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
+		pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
+		pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
 
 		StartCoroutine(StartRGBStream());
 	}
@@ -140,7 +146,7 @@ public class CombinedExample : MonoBehaviour
 	private IEnumerator StartRGBStream()
 	{
 		Debug.Log($"CombinedExample StartRGBStream");
-		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensorWithDefaultCapabilities(rgbSensorID.Value, configuredRGBStreams.ToArray());
+		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensor(rgbSensorID.Value, configuredRGBStreams.ToArray());
 
 		yield return configureOperation;
 		if (!configureOperation.DidOperationSucceed)
