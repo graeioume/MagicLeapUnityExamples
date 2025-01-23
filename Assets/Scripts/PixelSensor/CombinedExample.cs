@@ -79,7 +79,7 @@ public class CombinedExample : MonoBehaviour
     {
         foreach (PixelSensorId sensor in pixelSensorFeature.GetSupportedSensors())
         {
-            Debug.Log("Sensor Name Found: " + sensor.XrPathString);
+            Debug.Log("Sensor Name Found: " + sensor.SensorName);
 			if (rgbSensorID == null && sensor.SensorName.Contains("Picture"))
 				rgbSensorID = sensor;
 
@@ -240,6 +240,14 @@ public class CombinedExample : MonoBehaviour
 
 	private void TryInitializeWorldSensor()
 	{
+		// Make sure the sensor is Undefined before creating it
+		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) != PixelSensorStatus.Undefined ||
+			!pixelSensorFeature.CreatePixelSensor(worldSensorID.Value))
+		{
+			Debug.LogWarning("Failed to create World sensor. Will retry when it becomes available.");
+			return;
+		}
+
 		uint streamCount = pixelSensorFeature.GetStreamCount(worldSensorID.Value);
 		if (streamCount < 1)
 		{
@@ -307,7 +315,7 @@ public class CombinedExample : MonoBehaviour
 
 					float unityTime = Time.realtimeSinceStartup;
 					DateTimeOffset deviceTime = DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
-					Pose sensorPose = pixelSensorFeature.GetSensorPose(worldSensorID.Value);
+					Pose sensorPose = pixelSensorFeature.GetSensorPose(rgbSensorID.Value);
 					ImageSaver.InitNewFrame(Time.frameCount, unityTime, deviceTime);
 					ImageSaver.SaveSensor(texture, $"rgb{stream}", unityTime, deviceTime, sensorPose);
 				}
@@ -399,7 +407,21 @@ public class CombinedExample : MonoBehaviour
 
     private IEnumerator StopSensorCoroutine()
     {
-        if (depthSensorID.HasValue)
+		if (rgbSensorID.HasValue)
+		{
+			PixelSensorAsyncOperationResult stopRGBAsyncResult = pixelSensorFeature.StopSensor(rgbSensorID.Value, configuredRGBStreams);
+			yield return stopRGBAsyncResult;
+
+			if (stopRGBAsyncResult.DidOperationSucceed)
+			{
+				pixelSensorFeature.DestroyPixelSensor(rgbSensorID.Value);
+				Debug.Log("RGB sensor stopped and destroyed successfully.");
+			}
+			else
+				Debug.LogError("Failed to stop the RGB sensor.");
+		}
+
+		if (depthSensorID.HasValue)
         {
             PixelSensorAsyncOperationResult stopSensorAsyncResult = pixelSensorFeature.StopSensor(depthSensorID.Value, configuredDepthStreams);
             yield return stopSensorAsyncResult;
