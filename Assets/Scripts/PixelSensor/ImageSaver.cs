@@ -13,7 +13,7 @@ public static class ImageSaver
 
     public static void InitNewFrame(int frameCount, float frameTime, DateTimeOffset deviceTime)
     {
-		if (currentZip != null || currentFile != null || frameCount != currentFrame)
+		if (currentZip != null && currentFile != null && frameCount != currentFrame)
 			CloseLastFile();
 			
 		try
