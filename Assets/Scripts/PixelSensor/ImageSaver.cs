@@ -1,98 +1,62 @@
-﻿using MagicLeap.OpenXR.Features.PixelSensors;
-using System;
+﻿using System;
 using System.IO;
-using System.IO.Compression;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 
 public static class ImageSaver
 {
-	private static FileStream currentFile;
-	private static ZipArchive currentZip;
 	private static int currentFrame = -1;
+	private static string currentFolderPath;
 
-    public static void InitNewFrame(int frameCount, float frameTime, DateTimeOffset deviceTime)
-    {
-		if (currentZip != null && currentFile != null && frameCount != currentFrame)
-			CloseLastFile();
-			
+	public static void InitNewFrame(int frameCount, float frameTime, DateTimeOffset deviceTime)
+	{
 		try
 		{
-			var dataPath = Path.Combine(Application.persistentDataPath, "img", $"{Time.frameCount}_{frameTime}_{deviceTime.UtcTicks}.data");
-			currentFile = new FileStream(dataPath, FileMode.Create);
-			currentZip = new ZipArchive(currentFile, ZipArchiveMode.Create, leaveOpen: true);
+			// Create a folder named after the current frame count
 			currentFrame = frameCount;
-			Console.WriteLine($"{dataPath} created");
+			currentFolderPath = Path.Combine(Application.persistentDataPath, "img", frameCount.ToString());
+			if (!Directory.Exists(currentFolderPath))
+				Directory.CreateDirectory(currentFolderPath);
+
+			// Write the other two values (frameTime and deviceTime) into a txt file inside the folder
+			string metadataPath = Path.Combine(currentFolderPath, "metadata.txt");
+			if (!File.Exists(metadataPath))
+				File.WriteAllText(metadataPath, $"FrameTime: {frameTime}\nDeviceTime (UTC Ticks): {deviceTime.UtcTicks}");
+
+			string logsPath = Path.Combine(currentFolderPath, "logs.txt");
+			if (!File.Exists(logsPath))
+				File.WriteAllText(logsPath, LogsSaver.Logs.ToString());
+
+			Debug.Log($"{currentFolderPath} created");
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Failed to create frame {frameCount} {frameTime} {deviceTime.UtcTicks}: {ex.Message}");
+			Debug.LogError($"Failed to create folder for frame {frameCount}: {ex.Message}");
 		}
-	}
-	public static void CloseLastFile()
-	{
-		currentZip?.Dispose();
-		currentZip = null;
-		currentFile?.Close();
-		currentFile?.Dispose();
-		currentFile = null;
 	}
 
 	public static void SaveSensor(Texture2D texture, string prefix, float time, DateTimeOffset offset, Pose sensorPose)
 	{
-		if (currentFile == null || currentZip == null)
+		if (string.IsNullOrEmpty(currentFolderPath))
 		{
-			Debug.LogError($"Can't save {prefix} sensor with no file open");
+			Debug.LogError($"Can't save {prefix} sensor: no folder open.");
 			return;
 		}
 
 		try
 		{
-            byte[] data = texture.GetRawTextureData();
+			// Save the raw texture data
+			byte[] data = texture.GetRawTextureData();
+			string bytesPath = Path.Combine(currentFolderPath, $"{prefix}.bytes");
+			File.WriteAllBytes(bytesPath, data);
 
-			ZipArchiveEntry entry = currentZip.CreateEntry($"{prefix}.bytes", System.IO.Compression.CompressionLevel.NoCompression);
-			using (Stream es = entry.Open())
-				es.Write(data);
-
-			entry = currentZip.CreateEntry($"{prefix}_pose.txt", System.IO.Compression.CompressionLevel.NoCompression);
-			using (Stream es = entry.Open())
-			using (StreamWriter sw = new StreamWriter(es))
-				sw.WriteLine($"{prefix}: {sensorPose.position} | {sensorPose.rotation} | {texture.width} | {texture.height} | {texture.format}");
-
-			Console.WriteLine($" -{prefix} appended");
+			// Save pose and texture metadata
+			string posePath = Path.Combine(currentFolderPath, $"{prefix}_pose.txt");
+			File.WriteAllText(posePath, $"{prefix}: {sensorPose.position} | {sensorPose.rotation} | {texture.width} | {texture.height} | {texture.format}");
+			Debug.Log($" -{prefix} saved in {currentFolderPath}");
 		}
 		catch (Exception ex)
 		{
 			Debug.LogWarning($"Error writing {prefix} sensor: {ex}");
 		}
 	}
-
-
- //   public static void SaveImage(byte[] fileData, string filename)
- //   {
- //       try
- //       {
- //           // Application.persistentDataPath path is --> /storage/emulated/0/Android/data/com.magicleap.unity.examples/files/
- //           var strDataPath = Path.Combine(Application.persistentDataPath, "img", filename);
- //           // ImageConversion.EncodeArrayToPNG(data, GraphicsFormat.R8G8B8A8_UInt8, w, h);
- //           File.WriteAllBytes(strDataPath, fileData);
- //       }
- //       catch (Exception ex)
- //       {
- //           Debug.LogWarning("File writing error ::" + ex);
- //       }
- //   }
- //   public static void SaveTestFile()
- //   {
- //       try
- //       {
- //           // Application.persistentDataPath path is --> /storage/emulated/0/Android/data/com.magicleap.unity.examples/files/
- //           var strDataPath = Path.Combine(Application.persistentDataPath, "SaveFile.txt");
- //           File.WriteAllText(strDataPath, "Hello world");
- //       }
- //       catch (Exception ex)
- //       {
- //           Debug.LogWarning("File writing error ::" + ex);
- //       }
- //   }
 }

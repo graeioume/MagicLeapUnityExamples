@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Android;
 using UnityEngine.XR.OpenXR;
 
 
@@ -37,8 +36,11 @@ public class CombinedExample : MonoBehaviour
 	private readonly List<uint> configuredDepthStreams = new List<uint>();
 	private readonly List<uint> configuredWorldStreams = new List<uint>();
 
+	
     void Start()
     {
+		LogsSaver.Initialize();
+
 		Debug.Log($"CombinedExample Start frame: {Time.frameCount} go: {gameObject}");
 
         // gets Pixel Sensor Feature, basic object to access all pixel sensors
@@ -114,6 +116,7 @@ public class CombinedExample : MonoBehaviour
 			PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(rgbSensorID.Value))
 		{
 			Debug.LogWarning("Failed to create RGB sensor. Will retry when it becomes available.");
+			rgbSensorID = null;
 			return;
 		}
 
@@ -127,6 +130,7 @@ public class CombinedExample : MonoBehaviour
 		}
 
 		rgbTextures = new Texture2D[streamCount];
+		configuredRGBStreams.Clear();
 		for (uint i = 0; i < streamCount; i++)
 			configuredRGBStreams.Add(i);
 
@@ -142,6 +146,7 @@ public class CombinedExample : MonoBehaviour
 		if (!configureOperation.DidOperationSucceed)
 		{
 			Debug.LogError("Failed to configure RGB sensor.");
+			rgbSensorID = null;
 			yield break;
 		}
 
@@ -474,12 +479,6 @@ public class CombinedExample : MonoBehaviour
 			else
 				Debug.LogError("Failed to stop the sensor.");
 		}
-	}
-
-	private void OnApplicationQuit()
-	{
-		Debug.Log($"CombinedExample OnApplicationQuit");
-		ImageSaver.CloseLastFile();
 	}
 
 	public enum LongRangeUpdateRate { OneFps = 1, FiveFps = 5 }
