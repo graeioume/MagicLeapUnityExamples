@@ -1,19 +1,15 @@
+using MagicLeap.Android;
+using MagicLeap.OpenXR.Features.PixelSensors;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using MagicLeap.Android;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.XR.MagicLeap;
+using UnityEngine.Android;
 using UnityEngine.XR.OpenXR;
-using MagicLeap.OpenXR.Features.PixelSensors;
-using System;
-using System.IO.Compression;
-using System.IO;
-using Unity.XR.CoreUtils.Collections;
-using UnityEngine.InputSystem;
-using static UnityEngine.SpatialTracking.TrackedPoseDriver;
-using static UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation.XRDeviceSimulator;
+
+
 
 public class CombinedExample : MonoBehaviour
 {
@@ -43,6 +39,8 @@ public class CombinedExample : MonoBehaviour
 
     void Start()
     {
+		Debug.Log($"CombinedExample Start");
+
         // gets Pixel Sensor Feature, basic object to access all pixel sensors
         pixelSensorFeature = OpenXRSettings.Instance.GetFeature<MagicLeapPixelSensorFeature>();
         if (pixelSensorFeature == null || !pixelSensorFeature.enabled)
@@ -62,6 +60,7 @@ public class CombinedExample : MonoBehaviour
 
 	    Permissions.RequestPermissions(allRequiredPermissions,
             (string permission) => { // granted
+				Debug.Log($"CombinedExample Permission Granted: {permission}");
 				InitSensors();
 			},
             (string permission) =>{ // denied
@@ -77,21 +76,24 @@ public class CombinedExample : MonoBehaviour
 
     private void InitSensors()
     {
-        foreach (PixelSensorId sensor in pixelSensorFeature.GetSupportedSensors())
+		Debug.Log($"CombinedExample InitSensors");
+		foreach (PixelSensorId sensor in pixelSensorFeature.GetSupportedSensors())
         {
             Debug.Log("Sensor Name Found: " + sensor.SensorName);
-			if (rgbSensorID == null && sensor.SensorName.Contains("Picture"))
+			if (rgbSensorID == null && sensor.XrPathString.Contains("/pixelsensor/picture/center"))
 				rgbSensorID = sensor;
 
-			if (depthSensorID == null && sensor.SensorName.Contains("Depth"))
+			if (depthSensorID == null && sensor.XrPathString.Contains("/pixelsensor/depth/center"))
 				depthSensorID = sensor;
 
-            if (worldSensorID == null && sensor.SensorName.Contains("World"))
+            if (worldSensorID == null && sensor.XrPath.Contains("/pixelsensor/world/center"))
                 worldSensorID = sensor;
         }
 
-        // Subscribe to the Availability changed callback if the sensor becomes available.
-        pixelSensorFeature.OnSensorAvailabilityChanged += (PixelSensorId id, bool available) => {
+		Debug.Log($"CombinedExample InitSensors {rgbSensorID} {depthSensorID} {worldSensorID}");
+
+		// Subscribe to the Availability changed callback if the sensor becomes available.
+		pixelSensorFeature.OnSensorAvailabilityChanged += (PixelSensorId id, bool available) => {
 			if (rgbSensorID.HasValue && id == rgbSensorID && available)
 				TryInitializeRGBSensor();
 			if (depthSensorID.HasValue && id == depthSensorID && available)
@@ -107,6 +109,7 @@ public class CombinedExample : MonoBehaviour
 
 	private void TryInitializeRGBSensor()
     {
+		Debug.Log($"CombinedExample TryInitializeRGBSensor");
 		if (!rgbSensorID.HasValue || pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) !=
 			PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(rgbSensorID.Value))
 		{
@@ -131,6 +134,7 @@ public class CombinedExample : MonoBehaviour
 
 	private IEnumerator StartRGBStream()
 	{
+		Debug.Log($"CombinedExample StartRGBStream");
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensorWithDefaultCapabilities(rgbSensorID.Value, configuredRGBStreams.ToArray());
 
 		yield return configureOperation;
@@ -156,6 +160,7 @@ public class CombinedExample : MonoBehaviour
 
 	private void TryInitializeDepthSensor()
     {
+		Debug.Log($"CombinedExample TryInitializeDepthSensor");
 		if (!depthSensorID.HasValue || pixelSensorFeature.GetSensorStatus(depthSensorID.Value) !=
 			PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(depthSensorID.Value))
 		{
@@ -171,7 +176,8 @@ public class CombinedExample : MonoBehaviour
             return;
         }
 
-        configuredDepthStreams.Add(targetStream);
+		Debug.Log($"CombinedExample TryInitializeDepthSensor GetPixelSensorCapabilities");
+		configuredDepthStreams.Add(targetStream);
         pixelSensorFeature.GetPixelSensorCapabilities(depthSensorID.Value, targetStream, out PixelSensorCapability[] capabilities);
         foreach (PixelSensorCapability pixelSensorCapability in capabilities)
         {
@@ -209,6 +215,7 @@ public class CombinedExample : MonoBehaviour
 
 	private IEnumerator StartDepthStream()
 	{
+		Debug.Log($"CombinedExample StartDepthStream");
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensor(depthSensorID.Value, configuredDepthStreams);
 
 		yield return configureOperation;
@@ -240,6 +247,8 @@ public class CombinedExample : MonoBehaviour
 
 	private void TryInitializeWorldSensor()
 	{
+		Debug.Log($"CombinedExample TryInitializeWorldSensor");
+
 		// Make sure the sensor is Undefined before creating it
 		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) != PixelSensorStatus.Undefined ||
 			!pixelSensorFeature.CreatePixelSensor(worldSensorID.Value))
@@ -248,6 +257,7 @@ public class CombinedExample : MonoBehaviour
 			return;
 		}
 
+		Debug.Log($"CombinedExample TryInitializeWorldSensor GetStreamCount");
 		uint streamCount = pixelSensorFeature.GetStreamCount(worldSensorID.Value);
 		if (streamCount < 1)
 		{
@@ -255,6 +265,7 @@ public class CombinedExample : MonoBehaviour
 			return;
 		}
 
+		Debug.Log($"CombinedExample TryInitializeWorldSensor Creating Textures");
 		worldTextures = new Texture2D[streamCount];
 		for (uint i = 0; i < streamCount; i++)
 			configuredWorldStreams.Add(i);
@@ -264,6 +275,8 @@ public class CombinedExample : MonoBehaviour
 
 	private IEnumerator StartWorldStream()
 	{
+		Debug.Log($"CombinedExample StartWorldStream");
+
 		// Configure the sensor with default configuration
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensorWithDefaultCapabilities(worldSensorID.Value, configuredWorldStreams.ToArray());
 		yield return configureOperation;
@@ -293,10 +306,13 @@ public class CombinedExample : MonoBehaviour
 
 	private IEnumerator MonitorRGBSensor()
 	{
+		Debug.Log($"CombinedExample MonitorRGBSensor");
 		while (rgbSensorID.HasValue && pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) == PixelSensorStatus.Started)
 		{
 			foreach (uint stream in configuredRGBStreams)
 			{
+				Debug.Log($"CombinedExample MonitorRGBSensor {stream}");
+
 				// In this example, the meta data is not used.
 				if (pixelSensorFeature.GetSensorData(
 						rgbSensorID.Value, stream, out PixelSensorFrame frame,
@@ -327,14 +343,16 @@ public class CombinedExample : MonoBehaviour
 
 	private IEnumerator MonitorDepthSensor()
     {
-        Quaternion frameRotation = pixelSensorFeature.GetSensorFrameRotation(depthSensorID.Value);
+		Debug.Log($"CombinedExample MonitorDepthSensor");
+		Quaternion frameRotation = pixelSensorFeature.GetSensorFrameRotation(depthSensorID.Value);
 
         streamVisualizer.Initialize(targetStream, frameRotation, pixelSensorFeature, depthSensorID.Value);
         while (pixelSensorFeature.GetSensorStatus(depthSensorID.Value) == PixelSensorStatus.Started)
         {
             foreach (uint stream in configuredDepthStreams)
             {
-                if (pixelSensorFeature.GetSensorData(depthSensorID.Value, stream, out PixelSensorFrame frame, out PixelSensorMetaData[] metaData, Allocator.Temp, shouldFlipTexture: true))
+				Debug.Log($"CombinedExample MonitorDepthSensor {stream}");
+				if (pixelSensorFeature.GetSensorData(depthSensorID.Value, stream, out PixelSensorFrame frame, out PixelSensorMetaData[] metaData, Allocator.Temp, shouldFlipTexture: true))
                 {
 					Pose sensorPose = pixelSensorFeature.GetSensorPose(depthSensorID.Value);
 					DateTimeOffset deviceTime = DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
@@ -366,10 +384,12 @@ public class CombinedExample : MonoBehaviour
 
 	private IEnumerator MonitorWorldSensor()
 	{
+		Debug.Log($"CombinedExample MonitorWorldSensor");
 		while (worldSensorID.HasValue && pixelSensorFeature.GetSensorStatus(worldSensorID.Value) == PixelSensorStatus.Started)
 		{
 			foreach (uint stream in configuredWorldStreams)
 			{
+				Debug.Log($"CombinedExample MonitorWorldSensor {stream}");
 				// In this example, the meta data is not used.
 				if (pixelSensorFeature.GetSensorData(
 						worldSensorID.Value, stream, out PixelSensorFrame frame,
@@ -400,13 +420,16 @@ public class CombinedExample : MonoBehaviour
 
 	public void OnDisable()
     {
-        //We start the Coroutine on another MonoBehaviour since it can only run while the object is enabled.
-        MonoBehaviour camMono = Camera.main.GetComponent<MonoBehaviour>();
+		Debug.Log($"CombinedExample OnDisable");
+
+		//We start the Coroutine on another MonoBehaviour since it can only run while the object is enabled.
+		MonoBehaviour camMono = Camera.main.GetComponent<MonoBehaviour>();
         camMono.StartCoroutine(StopSensorCoroutine());
     }
 
     private IEnumerator StopSensorCoroutine()
     {
+		Debug.Log($"CombinedExample StopSensorCoroutine");
 		if (rgbSensorID.HasValue)
 		{
 			PixelSensorAsyncOperationResult stopRGBAsyncResult = pixelSensorFeature.StopSensor(rgbSensorID.Value, configuredRGBStreams);
@@ -454,6 +477,7 @@ public class CombinedExample : MonoBehaviour
 
 	private void OnApplicationQuit()
 	{
+		Debug.Log($"CombinedExample OnApplicationQuit");
 		ImageSaver.CloseLastFile();
 	}
 
