@@ -39,7 +39,7 @@ public class CombinedExample : MonoBehaviour
 
     void Start()
     {
-		Debug.Log($"CombinedExample Start");
+		Debug.Log($"CombinedExample Start frame: {Time.frameCount} go: {gameObject}");
 
         // gets Pixel Sensor Feature, basic object to access all pixel sensors
         pixelSensorFeature = OpenXRSettings.Instance.GetFeature<MagicLeapPixelSensorFeature>();
@@ -119,6 +119,7 @@ public class CombinedExample : MonoBehaviour
 
 		Debug.Log("RGB sensor created successfully.");
 		uint streamCount = pixelSensorFeature.GetStreamCount(rgbSensorID.Value);
+		Debug.Log($"RGB sensor has {streamCount} streams");
 		if (streamCount < 1)
 		{
 			Debug.LogError("Expected at least one RGB stream from the sensor.");
