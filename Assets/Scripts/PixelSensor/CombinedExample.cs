@@ -86,7 +86,7 @@ public class CombinedExample : MonoBehaviour
 			if (depthSensorID == null && sensor.XrPathString.Contains("/pixelsensor/depth/center"))
 				depthSensorID = sensor;
 
-            if (worldSensorID == null && sensor.XrPath.Contains("/pixelsensor/world/center"))
+            if (worldSensorID == null && sensor.XrPathString.Contains("/pixelsensor/world/center"))
                 worldSensorID = sensor;
         }
 
