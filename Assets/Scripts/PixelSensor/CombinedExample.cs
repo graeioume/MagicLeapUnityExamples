@@ -136,9 +136,12 @@ public class CombinedExample : MonoBehaviour
 		configuredRGBStreams.Clear();
 		configuredRGBStreams.Add(1); // CV stream
 
-		pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
-		pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
-		pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
+		if (pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) == PixelSensorStatus.NotConfigured)
+		{
+			pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
+			pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
+			pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
+		}
 
 		StartCoroutine(StartRGBStream());
 	}
@@ -259,59 +262,79 @@ public class CombinedExample : MonoBehaviour
 
 	private void TryInitializeWorldSensor()
 	{
-		Debug.Log($"CombinedExample TryInitializeWorldSensor");
+		Debug.Log("CombinedExample TryInitializeWorldSensor");
 
 		// Make sure the sensor is Undefined before creating it
-		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) != PixelSensorStatus.Undefined ||
-			!pixelSensorFeature.CreatePixelSensor(worldSensorID.Value))
+		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(worldSensorID.Value))
 		{
 			Debug.LogWarning("Failed to create World sensor. Will retry when it becomes available.");
 			return;
 		}
 
-		Debug.Log($"CombinedExample TryInitializeWorldSensor GetStreamCount");
+		Debug.Log("World sensor created successfully.");
+
 		uint streamCount = pixelSensorFeature.GetStreamCount(worldSensorID.Value);
-		if (streamCount < 1)
-		{
-			Debug.LogError("Expected at least 1 World streams to be available at the sensor.");
-			return;
-		}
-
-		Debug.Log($"CombinedExample TryInitializeWorldSensor Creating Textures");
+		Debug.Log($"World sensor has {streamCount} stream(s).");
 		worldTextures = new Texture2D[streamCount];
-		for (uint i = 0; i < streamCount; i++)
-			configuredWorldStreams.Add(i);
 
+		configuredWorldStreams.Clear();
+		if (streamCount > 0)
+			configuredWorldStreams.Add(0);
+		if (streamCount > 1)
+			configuredWorldStreams.Add(1);
+
+		// Start the custom configuration
 		StartCoroutine(StartWorldStream());
 	}
 
 	private IEnumerator StartWorldStream()
 	{
-		Debug.Log($"CombinedExample StartWorldStream");
+		Debug.Log("CombinedExample ConfigureWorldStreamsManually()");
 
-		// Configure the sensor with default configuration
-		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensorWithDefaultCapabilities(worldSensorID.Value, configuredWorldStreams.ToArray());
+		foreach (uint streamIndex in configuredWorldStreams)
+		{
+			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.UpdateRate, streamIndex) { IntValue = 30 } );
+			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.Format, streamIndex) { FrameFormat = PixelSensorFrameFormat.Grayscale } );
+			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.Resolution, streamIndex) { VectorValue = new Vector2Int(1016, 1016) } );
+
+			if (streamIndex == 1)
+			{
+				Debug.Log($"Configuring world stream {streamIndex} for Near IR auto-exposure.");
+				pixelSensorFeature.ApplySensorConfig( worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, streamIndex) { ExposureMode = PixelSensorAutoExposureMode.ProximityIrTracking } );
+			}
+			else
+			{
+				// For the other stream(s), optionally set environment mode if needed
+				Debug.Log($"Configuring world stream {streamIndex} for standard environment auto-exposure.");
+				pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, streamIndex) { ExposureMode = PixelSensorAutoExposureMode.EnvironmentTracking });
+			}
+
+			yield return null;
+		}
+
+		Debug.Log("Calling ConfigureSensor for World sensor...");
+		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensor(worldSensorID.Value, configuredWorldStreams.ToArray());
 		yield return configureOperation;
 
 		if (!configureOperation.DidOperationSucceed)
 		{
-			Debug.LogError("Failed to configure World sensor.");
+			Debug.LogError("Failed to configure World sensor streams for near IR usage.");
 			yield break;
 		}
+		Debug.Log("World sensor configured successfully with custom settings.");
 
-		Debug.Log("World sensor configured with defaults successfully.");
 
-		// Start the sensor with the default configuration and specify that all of the meta data should be requested.
-		PixelSensorAsyncOperationResult sensorStartAsyncResult = pixelSensorFeature.StartSensor(worldSensorID.Value, configuredWorldStreams);
-		yield return sensorStartAsyncResult;
+		Debug.Log("Starting World sensor...");
+		PixelSensorAsyncOperationResult startOperation = pixelSensorFeature.StartSensor(worldSensorID.Value, configuredWorldStreams);
+		yield return startOperation;
 
-		if (!sensorStartAsyncResult.DidOperationSucceed)
+		if (!startOperation.DidOperationSucceed)
 		{
-			Debug.LogError("World stream could not be started.");
+			Debug.LogError("Failed to start World sensor for near IR usage.");
 			yield break;
 		}
 
-		Debug.Log("World stream started successfully.");
+		Debug.Log("World sensor started successfully.");
 		yield return MonitorWorldSensor();
 	}
 
