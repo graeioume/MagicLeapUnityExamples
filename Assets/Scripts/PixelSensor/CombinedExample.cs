@@ -96,7 +96,7 @@ public class CombinedExample : MonoBehaviour
             if (worldSensorID == null && sensor.XrPathString.Contains("/pixelsensor/world/center"))
                 worldSensorID = sensor;
 
-			if (eyeSensorID == null && sensor.XrPathString.Contains("/pixelsensor/eye/nasal_left"))
+			if (eyeSensorID == null && sensor.XrPathString.Contains("/pixelsensor/eye/nasal/left"))
 				eyeSensorID = sensor;
 		}
 
