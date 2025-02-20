@@ -138,9 +138,29 @@ public class CombinedExample : MonoBehaviour
 
 		if (pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) == PixelSensorStatus.NotConfigured)
 		{
-			pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
-			pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
-			pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
+			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out var capabilities);
+			PixelSensorCapabilityType[] targetCapabilityTypes = new[]
+			{
+				PixelSensorCapabilityType.UpdateRate,
+				PixelSensorCapabilityType.Resolution,
+				PixelSensorCapabilityType.Format
+			};
+
+			foreach (var pixelSensorCapability in capabilities)
+			{
+				if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
+					continue;
+
+				if (pixelSensorFeature.QueryPixelSensorCapability(rgbSensorID.Value, pixelSensorCapability.CapabilityType, 1, out PixelSensorCapabilityRange range) && range.IsValid)
+				{
+					if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
+						pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
+					else if (range.CapabilityType == PixelSensorCapabilityType.Format)
+						pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
+					else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
+						pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
+				}
+			}
 		}
 
 		StartCoroutine(StartRGBStream());
@@ -291,25 +311,47 @@ public class CombinedExample : MonoBehaviour
 	{
 		Debug.Log("CombinedExample ConfigureWorldStreamsManually()");
 
-		foreach (uint streamIndex in configuredWorldStreams)
+		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) == PixelSensorStatus.NotConfigured)
 		{
-			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.UpdateRate, streamIndex) { IntValue = 30 } );
-			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.Format, streamIndex) { FrameFormat = PixelSensorFrameFormat.Grayscale } );
-			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.Resolution, streamIndex) { VectorValue = new Vector2Int(1016, 1016) } );
-
-			if (streamIndex == 1)
+			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out var capabilities);
+			PixelSensorCapabilityType[] targetCapabilityTypes = new[]
 			{
-				Debug.Log($"Configuring world stream {streamIndex} for Near IR auto-exposure.");
-				pixelSensorFeature.ApplySensorConfig( worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, streamIndex) { ExposureMode = PixelSensorAutoExposureMode.ProximityIrTracking } );
-			}
-			else
-			{
-				// For the other stream(s), optionally set environment mode if needed
-				Debug.Log($"Configuring world stream {streamIndex} for standard environment auto-exposure.");
-				pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, streamIndex) { ExposureMode = PixelSensorAutoExposureMode.EnvironmentTracking });
-			}
+				PixelSensorCapabilityType.UpdateRate,
+				PixelSensorCapabilityType.Resolution,
+				PixelSensorCapabilityType.Format,
+				PixelSensorCapabilityType.AutoExposureMode
+			};
 
-			yield return null;
+			foreach (var pixelSensorCapability in capabilities)
+			{
+				if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
+					continue;
+
+				if (pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, pixelSensorCapability.CapabilityType, 0, out PixelSensorCapabilityRange range) && range.IsValid)
+				{
+					Debug.Log($"Updating world sensor {pixelSensorCapability.CapabilityType}");
+					if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
+					{
+						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 0);
+						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
+					}
+					else if (range.CapabilityType == PixelSensorCapabilityType.Format)
+					{
+						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 0);
+						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 1);
+					}
+					else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
+					{
+						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 0);
+						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 1);
+					}
+					else if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureMode)
+					{
+						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 0) { ExposureMode = PixelSensorAutoExposureMode.EnvironmentTracking });
+						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 1) { ExposureMode = PixelSensorAutoExposureMode.ProximityIrTracking });
+					}
+				}
+			}
 		}
 
 		Debug.Log("Calling ConfigureSensor for World sensor...");
