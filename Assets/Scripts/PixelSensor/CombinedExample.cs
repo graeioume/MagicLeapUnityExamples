@@ -26,15 +26,19 @@ public class CombinedExample : MonoBehaviour
 
     // world
 	private Texture2D[] worldTextures;
+	// eye
+	private Texture2D[] eyeTextures;
 
 
 	private MagicLeapPixelSensorFeature pixelSensorFeature;
 	private PixelSensorId? rgbSensorID;
 	private PixelSensorId? depthSensorID;
 	private PixelSensorId? worldSensorID;
+	private PixelSensorId? eyeSensorID;
 	private readonly List<uint> configuredRGBStreams = new List<uint>();
 	private readonly List<uint> configuredDepthStreams = new List<uint>();
 	private readonly List<uint> configuredWorldStreams = new List<uint>();
+	private readonly List<uint> configuredEyeStreams = new List<uint>();
 
 	
     void Start()
@@ -91,9 +95,12 @@ public class CombinedExample : MonoBehaviour
 
             if (worldSensorID == null && sensor.XrPathString.Contains("/pixelsensor/world/center"))
                 worldSensorID = sensor;
-        }
 
-		Debug.Log($"CombinedExample InitSensors {rgbSensorID} {depthSensorID} {worldSensorID}");
+			if (eyeSensorID == null && sensor.XrPathString.Contains("/pixelsensor/eye/nasal_left"))
+				eyeSensorID = sensor;
+		}
+
+		Debug.Log($"CombinedExample InitSensors rgb:{rgbSensorID} depth:{depthSensorID} world:{worldSensorID} eye:{eyeSensorID}");
 
 		// Subscribe to the Availability changed callback if the sensor becomes available.
 		pixelSensorFeature.OnSensorAvailabilityChanged += (PixelSensorId id, bool available) => {
@@ -103,6 +110,8 @@ public class CombinedExample : MonoBehaviour
 				TryInitializeDepthSensor();
 			if (worldSensorID.HasValue && id == worldSensorID && available)
 				TryInitializeWorldSensor();
+			if (eyeSensorID.HasValue && id == eyeSensorID && available)
+				TryInitializeEyeSensor();
 		};
 
 		if (rgbSensorID.HasValue)
@@ -111,6 +120,8 @@ public class CombinedExample : MonoBehaviour
 			TryInitializeDepthSensor();
 		if (worldSensorID.HasValue)
 			TryInitializeWorldSensor();
+		if (eyeSensorID.HasValue)
+			TryInitializeEyeSensor();
 	}
 
 	private void TryInitializeRGBSensor()
@@ -151,15 +162,15 @@ public class CombinedExample : MonoBehaviour
 				if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
 					continue;
 
-				if (pixelSensorFeature.QueryPixelSensorCapability(rgbSensorID.Value, pixelSensorCapability.CapabilityType, 1, out PixelSensorCapabilityRange range) && range.IsValid)
-				{
-					if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
-						pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
-					else if (range.CapabilityType == PixelSensorCapabilityType.Format)
-						pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
-					else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
-						pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
-				}
+				if (!pixelSensorFeature.QueryPixelSensorCapability(rgbSensorID.Value, pixelSensorCapability.CapabilityType, 1, out PixelSensorCapabilityRange range) || !range.IsValid)
+					continue;
+
+				if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
+					pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
+				else if (range.CapabilityType == PixelSensorCapabilityType.Format)
+					pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
+				else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
+					pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
 			}
 		}
 
@@ -303,14 +314,7 @@ public class CombinedExample : MonoBehaviour
 		if (streamCount > 1)
 			configuredWorldStreams.Add(1);
 
-		// Start the custom configuration
-		StartCoroutine(StartWorldStream());
-	}
-
-	private IEnumerator StartWorldStream()
-	{
 		Debug.Log("CombinedExample ConfigureWorldStreamsManually()");
-
 		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) == PixelSensorStatus.NotConfigured)
 		{
 			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out var capabilities);
@@ -327,36 +331,45 @@ public class CombinedExample : MonoBehaviour
 				if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
 					continue;
 
-				if (pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, pixelSensorCapability.CapabilityType, 0, out PixelSensorCapabilityRange range) && range.IsValid)
+				if (!pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, pixelSensorCapability.CapabilityType, 0, out PixelSensorCapabilityRange range) || !range.IsValid)
+					continue;
+				if (!pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, pixelSensorCapability.CapabilityType, 1, out PixelSensorCapabilityRange range2) || !range.IsValid)
+					continue;
+
+				Debug.Log($"Updating world sensor {pixelSensorCapability.CapabilityType}");
+				if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
 				{
-					Debug.Log($"Updating world sensor {pixelSensorCapability.CapabilityType}");
-					if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
-					{
-						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 0);
-						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
-					}
-					else if (range.CapabilityType == PixelSensorCapabilityType.Format)
-					{
-						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 0);
-						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 1);
-					}
-					else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
-					{
-						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 0);
-						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 1);
-					}
-					else if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureMode)
-					{
-						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 0) { ExposureMode = PixelSensorAutoExposureMode.EnvironmentTracking });
-						pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 1) { ExposureMode = PixelSensorAutoExposureMode.ProximityIrTracking });
-					}
+					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 0);
+					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
+				}
+				else if (range.CapabilityType == PixelSensorCapabilityType.Format)
+				{
+					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 0);
+					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 1);
+				}
+				else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
+				{
+					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 0);
+					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 1);
+				}
+				else if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureMode)
+				{
+					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 0) { ExposureMode = PixelSensorAutoExposureMode.EnvironmentTracking });
+					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 1) { ExposureMode = PixelSensorAutoExposureMode.ProximityIrTracking });
 				}
 			}
 		}
 
-		Debug.Log("Calling ConfigureSensor for World sensor...");
+		// Start the custom configuration
+		StartCoroutine(StartWorldStream());
+	}
+
+	private IEnumerator StartWorldStream()
+	{
+		Debug.Log("CombinedExample Calling ConfigureSensor for World sensor...");
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensor(worldSensorID.Value, configuredWorldStreams.ToArray());
 		yield return configureOperation;
+
 
 		if (!configureOperation.DidOperationSucceed)
 		{
@@ -378,6 +391,66 @@ public class CombinedExample : MonoBehaviour
 
 		Debug.Log("World sensor started successfully.");
 		yield return MonitorWorldSensor();
+	}
+
+	private void TryInitializeEyeSensor()
+	{
+		Debug.Log($"CombinedExample TryInitializeEyeSensor");
+
+		if (pixelSensorFeature.GetSensorStatus(eyeSensorID.Value) != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(eyeSensorID.Value))
+		{
+			Debug.LogWarning("Failed to create Eye sensor. Will retry when it becomes available.");
+			return;
+		}
+
+		Debug.Log("Eye sensor created successfully.");
+		uint streamCount = pixelSensorFeature.GetStreamCount(eyeSensorID.Value);
+		Debug.Log($"Eye sensor has {streamCount} streams");
+
+		if (streamCount < 1)
+		{
+			Debug.LogError("Expected at least one Eye stream from the sensor.");
+			return;
+		}
+
+		eyeTextures = new Texture2D[streamCount];
+
+		configuredEyeStreams.Clear();
+		configuredEyeStreams.Add(0);
+		StartCoroutine(StartEyeStream());
+	}
+
+	private IEnumerator StartEyeStream()
+	{
+		Debug.Log($"CombinedExample StartEyeStream");
+		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensorWithDefaultCapabilities(
+			eyeSensorID.Value,
+			configuredEyeStreams.ToArray()
+		);
+		yield return configureOperation;
+
+		if (!configureOperation.DidOperationSucceed)
+		{
+			Debug.LogError("Failed to configure Eye sensor.");
+			yield break;
+		}
+
+		Debug.Log("Eye sensor configured successfully.");
+
+		PixelSensorAsyncOperationResult startOperation = pixelSensorFeature.StartSensor(
+			eyeSensorID.Value,
+			configuredEyeStreams
+		);
+		yield return startOperation;
+
+		if (!startOperation.DidOperationSucceed)
+		{
+			Debug.LogError("Failed to start Eye sensor.");
+			yield break;
+		}
+
+		Debug.Log("Eye sensor started successfully. Monitoring data...");
+		StartCoroutine(MonitorEyeSensor());
 	}
 
 
@@ -467,11 +540,7 @@ public class CombinedExample : MonoBehaviour
 			foreach (uint stream in configuredWorldStreams)
 			{
 				Debug.Log($"CombinedExample MonitorWorldSensor {stream}");
-				// In this example, the meta data is not used.
-				if (pixelSensorFeature.GetSensorData(
-						worldSensorID.Value, stream, out PixelSensorFrame frame,
-						out PixelSensorMetaData[] currentFrameMetaData,
-						Allocator.Temp, shouldFlipTexture: true))
+				if (pixelSensorFeature.GetSensorData(worldSensorID.Value, stream, out PixelSensorFrame frame, out PixelSensorMetaData[] currentFrameMetaData, Allocator.Temp, shouldFlipTexture: true))
 				{
 					PixelSensorPlane plane = frame.Planes[0];
 					Texture2D texture = worldTextures[stream];
@@ -491,6 +560,41 @@ public class CombinedExample : MonoBehaviour
 				}
 			}
 
+			yield return null;
+		}
+	}
+
+	private IEnumerator MonitorEyeSensor()
+	{
+		Debug.Log($"CombinedExample MonitorEyeSensor");
+		while (eyeSensorID.HasValue && pixelSensorFeature.GetSensorStatus(eyeSensorID.Value) == PixelSensorStatus.Started)
+		{
+			foreach (uint stream in configuredEyeStreams)
+			{
+				Debug.Log($"CombinedExample MonitorEyeSensor stream {stream}");
+				if (pixelSensorFeature.GetSensorData(eyeSensorID.Value, stream, out PixelSensorFrame frame, out PixelSensorMetaData[] currentFrameMetaData, Allocator.Temp, shouldFlipTexture: true))
+				{
+					PixelSensorPlane plane = frame.Planes[0];
+					Texture2D texture = eyeTextures[stream]; 
+					if (!frame.IsValid || frame.Planes.Length == 0)
+						continue;
+
+					if (texture == null)
+					{
+						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.R8, false);
+						eyeTextures[stream] = texture;
+					}
+
+					texture.LoadRawTextureData(plane.ByteData);
+					texture.Apply();
+
+					float unityTime = Time.realtimeSinceStartup;
+					DateTimeOffset deviceTime = DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
+					Pose sensorPose = pixelSensorFeature.GetSensorPose(eyeSensorID.Value);
+					ImageSaver.InitNewFrame(Time.frameCount, unityTime, deviceTime);
+					ImageSaver.SaveSensor(texture, $"eye{stream}", unityTime, deviceTime, sensorPose);
+				}
+			}
 			yield return null;
 		}
 	}
@@ -550,6 +654,23 @@ public class CombinedExample : MonoBehaviour
 			else
 				Debug.LogError("Failed to stop the sensor.");
 		}
+
+		if (eyeSensorID.HasValue)
+		{
+			PixelSensorAsyncOperationResult stopEyeAsyncResult = pixelSensorFeature.StopSensor(eyeSensorID.Value, configuredEyeStreams);
+			yield return stopEyeAsyncResult;
+
+			if (stopEyeAsyncResult.DidOperationSucceed)
+			{
+				pixelSensorFeature.DestroyPixelSensor(eyeSensorID.Value);
+				Debug.Log("Eye sensor stopped and destroyed successfully.");
+			}
+			else
+			{
+				Debug.LogError("Failed to stop the Eye sensor.");
+			}
+		}
+
 	}
 
 	public enum LongRangeUpdateRate { OneFps = 1, FiveFps = 5 }
