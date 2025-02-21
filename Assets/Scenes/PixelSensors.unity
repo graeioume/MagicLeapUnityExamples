@@ -1482,7 +1482,7 @@ MonoBehaviour:
   streamVisualizer: {fileID: 871066122}
   UseRawDepth: 0
   LongRange: 0
-  SRUpdateRate: 30
+  SRUpdateRate: 5
   LRUpdateRate: 5
 --- !u!54 &871066124
 Rigidbody:
