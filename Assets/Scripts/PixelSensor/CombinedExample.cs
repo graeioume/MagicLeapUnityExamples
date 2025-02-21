@@ -71,11 +71,11 @@ public class CombinedExample : MonoBehaviour
 				InitSensors();
 			},
             (string permission) =>{ // denied
-                Debug.LogError($"Permission {permission} not granted. Example script will not work.");
+                Debug.LogError($"Permission {permission} not granted. Script will not work.");
                 enabled = false;
             },
             (string permission) => { // denied
-                Debug.LogError($"Permission {permission} not granted. Example script will not work.");
+                Debug.LogError($"Permission {permission} not granted. Script will not work.");
                 enabled = false;
             }
         );
@@ -96,7 +96,7 @@ public class CombinedExample : MonoBehaviour
             if (worldSensorID == null && sensor.XrPathString.Contains("/pixelsensor/world/center"))
                 worldSensorID = sensor;
 
-			if (eyeSensorID == null && sensor.XrPathString.Contains("/pixelsensor/eye/nasal/left"))
+			if (eyeSensorID == null && sensor.XrPathString.Contains("/pixelsensor/eye/"))
 				eyeSensorID = sensor;
 		}
 
@@ -127,10 +127,10 @@ public class CombinedExample : MonoBehaviour
 	private void TryInitializeRGBSensor()
     {
 		Debug.Log($"CombinedExample TryInitializeRGBSensor");
-		if (pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(rgbSensorID.Value))
+		PixelSensorStatus statuc = pixelSensorFeature.GetSensorStatus(rgbSensorID.Value);
+		if (statuc != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(rgbSensorID.Value))
 		{
-			Debug.LogWarning("Failed to create RGB sensor. Will retry when it becomes available.");
-			rgbSensorID = null;
+			Debug.LogWarning($"Failed to Init RGB sensor. Current Status: {statuc}");
 			return;
 		}
 
@@ -149,7 +149,7 @@ public class CombinedExample : MonoBehaviour
 
 		if (pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) == PixelSensorStatus.NotConfigured)
 		{
-			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out var capabilities);
+			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out PixelSensorCapability[] capabilities);
 			PixelSensorCapabilityType[] targetCapabilityTypes = new[]
 			{
 				PixelSensorCapabilityType.UpdateRate,
@@ -157,7 +157,7 @@ public class CombinedExample : MonoBehaviour
 				PixelSensorCapabilityType.Format
 			};
 
-			foreach (var pixelSensorCapability in capabilities)
+			foreach (PixelSensorCapability pixelSensorCapability in capabilities)
 			{
 				if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
 					continue;
@@ -207,11 +207,11 @@ public class CombinedExample : MonoBehaviour
 	private void TryInitializeDepthSensor()
     {
 		Debug.Log($"CombinedExample TryInitializeDepthSensor");
-		if (!depthSensorID.HasValue || pixelSensorFeature.GetSensorStatus(depthSensorID.Value) !=
-			PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(depthSensorID.Value))
+		PixelSensorStatus statuc = pixelSensorFeature.GetSensorStatus(depthSensorID.Value);
+		if (statuc != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(depthSensorID.Value))
 		{
-			Debug.LogWarning("Failed to create Depth sensor. Will retry when it becomes available.");
-            return;
+			Debug.LogWarning($"Failed to Init Depth sensor. Current Status: {statuc}");
+			return;
 		}
 
 		Debug.Log("Depth sensor created successfully.");
@@ -294,11 +294,10 @@ public class CombinedExample : MonoBehaviour
 	private void TryInitializeWorldSensor()
 	{
 		Debug.Log("CombinedExample TryInitializeWorldSensor");
-
-		// Make sure the sensor is Undefined before creating it
-		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(worldSensorID.Value))
+		PixelSensorStatus statuc = pixelSensorFeature.GetSensorStatus(worldSensorID.Value);
+		if (statuc != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(worldSensorID.Value))
 		{
-			Debug.LogWarning("Failed to create World sensor. Will retry when it becomes available.");
+			Debug.LogWarning($"Failed to Init World sensor. Current Status: {statuc}");
 			return;
 		}
 
@@ -317,7 +316,7 @@ public class CombinedExample : MonoBehaviour
 		Debug.Log("CombinedExample ConfigureWorldStreamsManually()");
 		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) == PixelSensorStatus.NotConfigured)
 		{
-			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out var capabilities);
+			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out PixelSensorCapability[] capabilities);
 			PixelSensorCapabilityType[] targetCapabilityTypes = new[]
 			{
 				PixelSensorCapabilityType.UpdateRate,
@@ -326,7 +325,7 @@ public class CombinedExample : MonoBehaviour
 				PixelSensorCapabilityType.AutoExposureMode
 			};
 
-			foreach (var pixelSensorCapability in capabilities)
+			foreach (PixelSensorCapability pixelSensorCapability in capabilities)
 			{
 				if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
 					continue;
@@ -396,10 +395,10 @@ public class CombinedExample : MonoBehaviour
 	private void TryInitializeEyeSensor()
 	{
 		Debug.Log($"CombinedExample TryInitializeEyeSensor");
-
-		if (pixelSensorFeature.GetSensorStatus(eyeSensorID.Value) != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(eyeSensorID.Value))
+		PixelSensorStatus statuc = pixelSensorFeature.GetSensorStatus(eyeSensorID.Value);
+		if (statuc != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(eyeSensorID.Value))
 		{
-			Debug.LogWarning("Failed to create Eye sensor. Will retry when it becomes available.");
+			Debug.LogWarning($"Failed to Init Eye sensor. Current Status: {statuc}");
 			return;
 		}
 
