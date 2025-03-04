@@ -4,8 +4,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.XR.OpenXR;
 
 
@@ -22,7 +24,7 @@ public class CombinedExample : MonoBehaviour
 	public bool LongRange = false;
     public ShortRangeUpdateRate SRUpdateRate;
     public LongRangeUpdateRate LRUpdateRate;
-    private uint targetStream => LongRange ? (uint)0 : (uint)1;
+    private uint depthRangeToUse => LongRange ? (uint)0 : (uint)1;
 
     // world
 	private Texture2D[] worldTextures;
@@ -147,32 +149,32 @@ public class CombinedExample : MonoBehaviour
 		configuredRGBStreams.Clear();
 		configuredRGBStreams.Add(1); // CV stream
 
-		if (pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) == PixelSensorStatus.NotConfigured)
-		{
-			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out PixelSensorCapability[] capabilities);
-			PixelSensorCapabilityType[] targetCapabilityTypes = new[]
-			{
-				PixelSensorCapabilityType.UpdateRate,
-				PixelSensorCapabilityType.Resolution,
-				PixelSensorCapabilityType.Format
-			};
+ //       if (pixelSensorFeature.GetSensorStatus(rgbSensorID.Value) == PixelSensorStatus.NotConfigured)
+	//	{
+	//		pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out PixelSensorCapability[] capabilities);
+	//		PixelSensorCapabilityType[] targetCapabilityTypes = new[]
+	//		{
+	//			PixelSensorCapabilityType.UpdateRate,
+	//			PixelSensorCapabilityType.Resolution,
+	//			PixelSensorCapabilityType.Format
+	//		};
 
-			foreach (PixelSensorCapability pixelSensorCapability in capabilities)
-			{
-				if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
-					continue;
+	//		foreach (PixelSensorCapability pixelSensorCapability in capabilities)
+	//		{
+	//			if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
+	//				continue;
 
-				if (!pixelSensorFeature.QueryPixelSensorCapability(rgbSensorID.Value, pixelSensorCapability.CapabilityType, 1, out PixelSensorCapabilityRange range) || !range.IsValid)
-					continue;
+	//			if (!pixelSensorFeature.QueryPixelSensorCapability(rgbSensorID.Value, pixelSensorCapability.CapabilityType, 1, out PixelSensorCapabilityRange range) || !range.IsValid)
+	//				continue;
 
-				if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
-					pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
-				else if (range.CapabilityType == PixelSensorCapabilityType.Format)
-					pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
-				else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
-					pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
-			}
-		}
+	//			if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
+	//				pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
+	//			else if (range.CapabilityType == PixelSensorCapabilityType.Format)
+	//				pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Rgba8888, 1);
+	//			else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
+	//				pixelSensorFeature.ApplySensorConfig(rgbSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1280, 720), 1);
+	//		}
+	//	}
 
 		StartCoroutine(StartRGBStream());
 	}
@@ -180,13 +182,12 @@ public class CombinedExample : MonoBehaviour
 	private IEnumerator StartRGBStream()
 	{
 		Debug.Log($"CombinedExample StartRGBStream");
-		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensor(rgbSensorID.Value, configuredRGBStreams.ToArray());
+		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensorWithDefaultCapabilities(rgbSensorID.Value, configuredRGBStreams.ToArray());
 
 		yield return configureOperation;
 		if (!configureOperation.DidOperationSucceed)
 		{
 			Debug.LogError("Failed to configure RGB sensor.");
-			rgbSensorID = null;
 			yield break;
 		}
 
@@ -223,33 +224,33 @@ public class CombinedExample : MonoBehaviour
         }
 
 		Debug.Log($"CombinedExample TryInitializeDepthSensor GetPixelSensorCapabilities");
-		configuredDepthStreams.Add(targetStream);
-        pixelSensorFeature.GetPixelSensorCapabilities(depthSensorID.Value, targetStream, out PixelSensorCapability[] capabilities);
+		configuredDepthStreams.Add(depthRangeToUse);
+        pixelSensorFeature.GetPixelSensorCapabilities(depthSensorID.Value, depthRangeToUse, out PixelSensorCapability[] capabilities);
         foreach (PixelSensorCapability pixelSensorCapability in capabilities)
         {
-            if (pixelSensorFeature.QueryPixelSensorCapability(depthSensorID.Value, pixelSensorCapability.CapabilityType, targetStream, out PixelSensorCapabilityRange range) && range.IsValid)
+            if (pixelSensorFeature.QueryPixelSensorCapability(depthSensorID.Value, pixelSensorCapability.CapabilityType, depthRangeToUse, out PixelSensorCapabilityRange range) && range.IsValid)
             {
                 if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
                 {
-					PixelSensorConfigData configData = new PixelSensorConfigData(range.CapabilityType, targetStream);
+					PixelSensorConfigData configData = new PixelSensorConfigData(range.CapabilityType, depthRangeToUse);
                     configData.IntValue = LongRange ? (uint)LRUpdateRate : (uint)SRUpdateRate;
                     pixelSensorFeature.ApplySensorConfig(depthSensorID.Value, configData);
                 }
                 else if (range.CapabilityType == PixelSensorCapabilityType.Format)
                 {
-					PixelSensorConfigData configData = new PixelSensorConfigData(range.CapabilityType, targetStream);
+					PixelSensorConfigData configData = new PixelSensorConfigData(range.CapabilityType, depthRangeToUse);
                     configData.IntValue = (uint)range.FrameFormats[UseRawDepth ? 1 : 0];
                     pixelSensorFeature.ApplySensorConfig(depthSensorID.Value, configData);
                 }
                 else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
                 {
-					PixelSensorConfigData configData = new PixelSensorConfigData(range.CapabilityType, targetStream);
+					PixelSensorConfigData configData = new PixelSensorConfigData(range.CapabilityType, depthRangeToUse);
                     configData.VectorValue = range.ExtentValues[0];
                     pixelSensorFeature.ApplySensorConfig(depthSensorID.Value, configData);
                 }
                 else if (range.CapabilityType == PixelSensorCapabilityType.Depth)
                 {
-					PixelSensorConfigData configData = new PixelSensorConfigData(range.CapabilityType, targetStream);
+					PixelSensorConfigData configData = new PixelSensorConfigData(range.CapabilityType, depthRangeToUse);
                     configData.FloatValue = LongRange ? 5f : 0.99f;
                     pixelSensorFeature.ApplySensorConfig(depthSensorID.Value, configData);
                 }
@@ -314,50 +315,50 @@ public class CombinedExample : MonoBehaviour
 			configuredWorldStreams.Add(1);
 
 		Debug.Log("CombinedExample ConfigureWorldStreamsManually()");
-		if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) == PixelSensorStatus.NotConfigured)
-		{
-			pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out PixelSensorCapability[] capabilities);
-			PixelSensorCapabilityType[] targetCapabilityTypes = new[]
-			{
-				PixelSensorCapabilityType.UpdateRate,
-				PixelSensorCapabilityType.Resolution,
-				PixelSensorCapabilityType.Format,
-				PixelSensorCapabilityType.AutoExposureMode
-			};
+		//if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) == PixelSensorStatus.NotConfigured)
+		//{
+		//	pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out PixelSensorCapability[] capabilities);
+		//	PixelSensorCapabilityType[] targetCapabilityTypes = new[]
+		//	{
+		//		PixelSensorCapabilityType.UpdateRate,
+		//		PixelSensorCapabilityType.Resolution,
+		//		PixelSensorCapabilityType.Format,
+		//		PixelSensorCapabilityType.AutoExposureMode
+		//	};
 
-			foreach (PixelSensorCapability pixelSensorCapability in capabilities)
-			{
-				if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
-					continue;
+		//	foreach (PixelSensorCapability pixelSensorCapability in capabilities)
+		//	{
+		//		if (!targetCapabilityTypes.Contains(pixelSensorCapability.CapabilityType))
+		//			continue;
 
-				if (!pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, pixelSensorCapability.CapabilityType, 0, out PixelSensorCapabilityRange range) || !range.IsValid)
-					continue;
-				if (!pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, pixelSensorCapability.CapabilityType, 1, out PixelSensorCapabilityRange range2) || !range.IsValid)
-					continue;
+		//		if (!pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, pixelSensorCapability.CapabilityType, 0, out PixelSensorCapabilityRange range) || !range.IsValid)
+		//			continue;
+		//		if (!pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, pixelSensorCapability.CapabilityType, 1, out PixelSensorCapabilityRange range2) || !range.IsValid)
+		//			continue;
 
-				Debug.Log($"Updating world sensor {pixelSensorCapability.CapabilityType}");
-				if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
-				{
-					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 0);
-					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
-				}
-				else if (range.CapabilityType == PixelSensorCapabilityType.Format)
-				{
-					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 0);
-					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 1);
-				}
-				else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
-				{
-					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 0);
-					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 1);
-				}
-				else if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureMode)
-				{
-					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 0) { ExposureMode = PixelSensorAutoExposureMode.EnvironmentTracking });
-					pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 1) { ExposureMode = PixelSensorAutoExposureMode.ProximityIrTracking });
-				}
-			}
-		}
+		//		Debug.Log($"Updating world sensor {pixelSensorCapability.CapabilityType}");
+		//		if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate)
+		//		{
+		//			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 0);
+		//			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.UpdateRate, 30, 1);
+		//		}
+		//		else if (range.CapabilityType == PixelSensorCapabilityType.Format)
+		//		{
+		//			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 0);
+		//			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Format, (uint)PixelSensorFrameFormat.Grayscale, 1);
+		//		}
+		//		else if (range.CapabilityType == PixelSensorCapabilityType.Resolution)
+		//		{
+		//			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 0);
+		//			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, PixelSensorCapabilityType.Resolution, new Vector2Int(1016, 1016), 1);
+		//		}
+		//		else if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureMode)
+		//		{
+		//			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 0) { ExposureMode = PixelSensorAutoExposureMode.EnvironmentTracking });
+		//			pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, new PixelSensorConfigData(PixelSensorCapabilityType.AutoExposureMode, 1) { ExposureMode = PixelSensorAutoExposureMode.ProximityIrTracking });
+		//		}
+		//	}
+		//}
 
 		// Start the custom configuration
 		StartCoroutine(StartWorldStream());
@@ -365,7 +366,84 @@ public class CombinedExample : MonoBehaviour
 
 	private IEnumerator StartWorldStream()
 	{
-		Debug.Log("CombinedExample Calling ConfigureSensor for World sensor...");
+        var targetCapabilityTypes = new PixelSensorCapabilityType[]
+        {
+            PixelSensorCapabilityType.AutoExposureMode,
+            PixelSensorCapabilityType.AutoExposureTargetBrightness,
+        };
+
+        foreach (uint streamIndex in configuredWorldStreams)
+        {
+            // Iterate through each of the target capabilities and try to find it in the sensors availible capabilities, then set it's value.
+			// When configuring a sensor capabilities have to be configured iteratively since each applied configuration can impact other capabilities.
+			// Step 1 : Itereate through each of the target capabilities
+			for (var index = 0; index < targetCapabilityTypes.Length; index++)
+            {
+                PixelSensorCapabilityType pixelSensorCapability = targetCapabilityTypes[index];
+				Debug.Log($"World Cam configuring {pixelSensorCapability} for stream {streamIndex}");
+
+                // Get the sensors capabilities based on the previous applied settings.
+                pixelSensorFeature.GetPixelSensorCapabilities(worldSensorID.Value, streamIndex, out PixelSensorCapability[] capabilities);
+                // Step2 Try to find a capability of the same type in the sensor
+                PixelSensorCapability targetAbility = capabilities.FirstOrDefault(x => x.CapabilityType == pixelSensorCapability);
+                // Verify that it was found - A null check would not work because it is a struct.
+                if (targetAbility.CapabilityType == pixelSensorCapability)
+                {
+                    // Once found, we query the valid range of the capability
+                    if (pixelSensorFeature.QueryPixelSensorCapability(worldSensorID.Value, targetAbility.CapabilityType, streamIndex, out PixelSensorCapabilityRange range) && range.IsValid)
+                    {
+                        // If the capability is required, we use the default value.
+                        // This is because these values cannot be configure on the world cameras.
+                        // UpdateRate = 30, Format = Grayscale, Resolution = 1016x1016
+                        if (range.CapabilityType == PixelSensorCapabilityType.UpdateRate
+                            || range.CapabilityType == PixelSensorCapabilityType.Format
+                            || range.CapabilityType == PixelSensorCapabilityType.Resolution)
+                        {
+                            pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, range.GetDefaultConfig(streamIndex));
+                            yield return null;
+                        }
+
+                        const uint AutoExposure = 1; // nearIR
+                        const float AutoExposureTargetBrightness = 1f;
+                        const int ManualExposureTime = 50;
+                        const int AnalogGain = 100;
+                        // Custom Capability settings based on the settings of the Script (AutoExposure vs Manual Exposure)
+                        // Auto Exposure: Auto Exposure Mode (Controller / Enviornment) ,  AutoExposure Target (-5.0 to 5.0)
+                        if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureMode)
+                        {
+                            var configData = new PixelSensorConfigData(range.CapabilityType, streamIndex);
+                            Debug.Log($"World Camera AutoExposureMode range: {string.Join(", ", range.IntValues)}");
+                            if (range.IntValues.Contains(AutoExposure))
+                            {
+                                configData.IntValue = AutoExposure;
+                                pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, configData);
+                                yield return null;
+                            }
+                        } else if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureTargetBrightness)
+                        {
+                            var configData = new PixelSensorConfigData(range.CapabilityType, streamIndex);
+                            configData.FloatValue = Mathf.Clamp(AutoExposureTargetBrightness, range.FloatRange.Value.Min, range.FloatRange.Value.Max);
+                            pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, configData);
+                            yield return null;
+                        } else if (range.CapabilityType == PixelSensorCapabilityType.ManualExposureTime)
+                        {
+                            var configData = new PixelSensorConfigData(range.CapabilityType, streamIndex);
+                            configData.IntValue = (uint)Mathf.Clamp(ManualExposureTime, range.IntRange.Value.Min, range.IntRange.Value.Max);
+                            pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, configData);
+                            yield return null;
+                        } else if (range.CapabilityType == PixelSensorCapabilityType.AnalogGain)
+                        {
+                            var configData = new PixelSensorConfigData(range.CapabilityType, streamIndex);
+                            configData.IntValue = (uint)Mathf.Clamp((uint)AnalogGain, range.IntRange.Value.Min, range.IntRange.Value.Max);
+                            pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, configData);
+                            yield return null;
+                        }
+                    }
+                }
+            }
+        }
+
+        Debug.Log("CombinedExample Calling ConfigureSensor for World sensor...");
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensor(worldSensorID.Value, configuredWorldStreams.ToArray());
 		yield return configureOperation;
 
@@ -377,9 +455,19 @@ public class CombinedExample : MonoBehaviour
 		}
 		Debug.Log("World sensor configured successfully with custom settings.");
 
+		Dictionary<uint, PixelSensorMetaDataType[]> supportedMetadataTypes = new();
+		foreach (uint stream in configuredWorldStreams)
+		{
+            if (pixelSensorFeature.EnumeratePixelSensorMetaDataTypes(worldSensorID.Value, stream, out var metaDataTypes))
+            {
+                Debug.Log($"World Cam: Obtaining supported metadata types: {string.Join(", ", metaDataTypes)}");
+                supportedMetadataTypes.Add(stream, metaDataTypes);
+            }
+        }
 
-		Debug.Log("Starting World sensor...");
-		PixelSensorAsyncOperationResult startOperation = pixelSensorFeature.StartSensor(worldSensorID.Value, configuredWorldStreams);
+        Debug.Log("Starting World sensor...");
+        PixelSensorAsyncOperationResult startOperation =
+            pixelSensorFeature.StartSensor(worldSensorID.Value, configuredWorldStreams, supportedMetadataTypes);
 		yield return startOperation;
 
 		if (!startOperation.DidOperationSucceed)
@@ -495,7 +583,7 @@ public class CombinedExample : MonoBehaviour
 		Debug.Log($"CombinedExample MonitorDepthSensor");
 		Quaternion frameRotation = pixelSensorFeature.GetSensorFrameRotation(depthSensorID.Value);
 
-        streamVisualizer.Initialize(targetStream, frameRotation, pixelSensorFeature, depthSensorID.Value);
+        streamVisualizer.Initialize(depthRangeToUse, frameRotation, pixelSensorFeature, depthSensorID.Value);
         while (pixelSensorFeature.GetSensorStatus(depthSensorID.Value) == PixelSensorStatus.Started)
         {
             foreach (uint stream in configuredDepthStreams)
@@ -551,11 +639,41 @@ public class CombinedExample : MonoBehaviour
 					texture.LoadRawTextureData(plane.ByteData);
 					texture.Apply();
 
-					float unityTime = Time.realtimeSinceStartup;
+					StringBuilder meta = new StringBuilder(1024);
+					meta.AppendLine();
+                    foreach (PixelSensorMetaData metaData in currentFrameMetaData)
+                    {
+                        switch (metaData)
+                        {
+                            case PixelSensorAnalogGain analogGain:
+                                meta.AppendLine($"AnalogGain: {analogGain.AnalogGain}");
+                                break;
+                            case PixelSensorDigitalGain digitalGain:
+                                meta.AppendLine($"DigitalGain: {digitalGain.DigitalGain}");
+                                break;
+                            case PixelSensorExposureTime exposureTime:
+                                meta.AppendLine($"ExposureTime: {exposureTime.ExposureTime:F1}");
+                                break;
+                            case PixelSensorFisheyeIntrinsics fisheyeIntrinsics:
+                                {
+                                    meta.AppendLine($"FOV: {fisheyeIntrinsics.FOV}");
+                                    meta.AppendLine($"Focal Length: {fisheyeIntrinsics.FocalLength}");
+                                    meta.AppendLine($"Principal Point: {fisheyeIntrinsics.PrincipalPoint}");
+                                    meta.AppendLine(
+                                        $"Radial Distortion: [{string.Join(',', fisheyeIntrinsics.RadialDistortion.Select(val => val.ToString("F1")))}]");
+                                    meta.AppendLine(
+                                        $"Tangential Distortion: [{string.Join(',', fisheyeIntrinsics.TangentialDistortion.Select(val => val.ToString("F1")))}]");
+                                    break;
+                                }
+                        }
+                    }
+
+
+                    float unityTime = Time.realtimeSinceStartup;
 					DateTimeOffset deviceTime = DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
 					Pose sensorPose = pixelSensorFeature.GetSensorPose(worldSensorID.Value);
 					ImageSaver.InitNewFrame(Time.frameCount, unityTime, deviceTime);
-					ImageSaver.SaveSensor(texture, $"world{stream}", unityTime, deviceTime, sensorPose);
+					ImageSaver.SaveSensor(texture, $"world{stream}", unityTime, deviceTime, sensorPose, meta.ToString());
 				}
 			}
 

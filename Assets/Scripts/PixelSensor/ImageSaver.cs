@@ -34,7 +34,7 @@ public static class ImageSaver
 		}
 	}
 
-	public static void SaveSensor(Texture2D texture, string prefix, float time, DateTimeOffset offset, Pose sensorPose)
+	public static void SaveSensor(Texture2D texture, string prefix, float time, DateTimeOffset offset, Pose sensorPose, string extraData = "")
 	{
 		if (string.IsNullOrEmpty(currentFolderPath))
 		{
@@ -51,10 +51,11 @@ public static class ImageSaver
 
 			// Save pose and texture metadata
 			string posePath = Path.Combine(currentFolderPath, $"{prefix}_pose.txt");
-			File.WriteAllText(posePath, $"{prefix}: {sensorPose.position} | {sensorPose.rotation} | {texture.width} | {texture.height} | {texture.format}");
+			File.WriteAllText(posePath, $"{prefix}: {sensorPose.position} | {sensorPose.rotation} | {texture.width} | {texture.height} | {texture.format} | {extraData}");
 			Debug.Log($" -{prefix} saved in {currentFolderPath}");
 		}
-		catch (Exception ex)
+
+        catch (Exception ex)
 		{
 			Debug.LogWarning($"Error writing {prefix} sensor: {ex}");
 		}
