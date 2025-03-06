@@ -2,12 +2,18 @@
 using System.IO;
 using UnityEngine;
 
-public static class ImageSaver
+[GameService]
+public class ImageSaver : BaseService
 {
 	private static int currentFrame = -1;
 	private static string currentFolderPath;
 
-	public static void InitNewFrame(int frameCount, float frameTime, DateTimeOffset deviceTime)
+    public override void Initialize()
+    {
+		ClearImgFolder();
+    }
+
+    public static void InitNewFrame(int frameCount, float frameTime, DateTimeOffset deviceTime)
 	{
 		try
 		{

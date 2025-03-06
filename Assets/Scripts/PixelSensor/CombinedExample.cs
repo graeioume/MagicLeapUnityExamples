@@ -45,9 +45,6 @@ public class CombinedExample : MonoBehaviour
 	
     void Start()
     {
-		ImageSaver.ClearImgFolder();
-		LogsSaver.Initialize();
-
 		Debug.Log($"CombinedExample Start frame: {Time.frameCount} go: {gameObject}");
 
         // gets Pixel Sensor Feature, basic object to access all pixel sensors
