@@ -1,4 +1,5 @@
 using MagicLeap.Android;
+using MagicLeap.OpenXR.Features.EyeTracker;
 using MagicLeap.OpenXR.Features.PixelSensors;
 using System;
 using System.Collections;
@@ -29,7 +30,8 @@ public class CombinedExample : MonoBehaviour
     // world
 	private Texture2D[] worldTextures;
 	// eye
-	private Texture2D[] eyeTextures;
+	private MagicLeapEyeTrackerFeature eyeTrackerFeature;
+    private Texture2D[] eyeTextures;
 
 
 	private MagicLeapPixelSensorFeature pixelSensorFeature;
@@ -41,6 +43,7 @@ public class CombinedExample : MonoBehaviour
 	private readonly List<uint> configuredDepthStreams = new List<uint>();
 	private readonly List<uint> configuredWorldStreams = new List<uint>();
 	private readonly List<uint> configuredEyeStreams = new List<uint>();
+	private List<string> grantedPermissions = new();
 
 	
     void Start()
@@ -61,13 +64,17 @@ public class CombinedExample : MonoBehaviour
         {
             UnityEngine.Android.Permission.Camera, // Needed for RGB and World camera
             Permissions.DepthCamera,
-            Permissions.EyeCamera
+            Permissions.EyeCamera,
+			Permissions.EyeTracking,
+			Permissions.PupilSize,
         };
 
 	    Permissions.RequestPermissions(allRequiredPermissions,
             (string permission) => { // granted
 				Debug.Log($"CombinedExample Permission Granted: {permission}");
-				InitSensors();
+				grantedPermissions.Add(permission);
+
+                InitSensors();
 			},
             (string permission) =>{ // denied
                 Debug.LogError($"Permission {permission} not granted. Script will not work.");
@@ -97,6 +104,12 @@ public class CombinedExample : MonoBehaviour
 
 			if (eyeSensorID == null && sensor.XrPathString.Contains("/pixelsensor/eye/"))
 				eyeSensorID = sensor;
+
+			if (grantedPermissions.Contains(Permissions.EyeTracking) && grantedPermissions.Contains(Permissions.PupilSize))
+			{
+                eyeTrackerFeature = OpenXRSettings.Instance.GetFeature<MagicLeapEyeTrackerFeature>();
+                eyeTrackerFeature.CreateEyeTracker();
+            }
 		}
 
 		Debug.Log($"CombinedExample InitSensors rgb:{rgbSensorID} depth:{depthSensorID} world:{worldSensorID} eye:{eyeSensorID}");
@@ -718,8 +731,42 @@ public class CombinedExample : MonoBehaviour
 					float unityTime = Time.realtimeSinceStartup;
 					DateTimeOffset deviceTime = DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
 					Pose sensorPose = default; // pixelSensorFeature.GetSensorPose(eyeSensorID.Value);
-					ImageSaver.InitNewFrame(Time.frameCount, unityTime, deviceTime);
-					ImageSaver.SaveSensor(texture, $"eye{stream}", unityTime, deviceTime, sensorPose);
+                    EyeTrackerData eyeTrackerData = eyeTrackerFeature.GetEyeTrackerData();
+					StringBuilder data = new(1024);
+					for (int i = 0; i < eyeTrackerData.PupilData.Length; i++)
+					{
+                        data.AppendLine($"Pupil {i} Eye:      {eyeTrackerData.PupilData[i].Eye}");
+                        data.AppendLine($"Pupil {i} Diameter: {eyeTrackerData.PupilData[i].PupilDiameter}");
+                    }
+
+                    data.AppendLine($"Gaze Behaviour:          {eyeTrackerData.GazeBehaviorData.GazeBehaviorType}");
+                    data.AppendLine($"Gaze Behaviour Duration: {eyeTrackerData.GazeBehaviorData.Duration}");
+                    data.AppendLine($"Gaze Behaviour Time:     {eyeTrackerData.GazeBehaviorData.Time}");
+                    data.AppendLine($"Gaze Behaviour Onset:    {eyeTrackerData.GazeBehaviorData.OnsetTime}");
+                    data.AppendLine($"Gaze Behaviour Metadata Valid:     {eyeTrackerData.GazeBehaviorData.MetaData.Valid}");
+                    data.AppendLine($"Gaze Behaviour Metadata Amplitude: {eyeTrackerData.GazeBehaviorData.MetaData.Amplitude}");
+                    data.AppendLine($"Gaze Behaviour Metadata Direction: {eyeTrackerData.GazeBehaviorData.MetaData.Direction}");
+                    data.AppendLine($"Gaze Behaviour Metadata Velocity:  {eyeTrackerData.GazeBehaviorData.MetaData.Velocity}");
+
+                    data.AppendLine($"Gaze Position:        {eyeTrackerData.PosesData.GazePose.Pose.position}");
+                    data.AppendLine($"Gaze Rotation:        {eyeTrackerData.PosesData.GazePose.Pose.rotation}");
+                    data.AppendLine($"Gaze Duration:        {eyeTrackerData.PosesData.GazePose.Time}");
+                    data.AppendLine($"Gaze Confidence:      {eyeTrackerData.PosesData.GazePose.Confidence}");
+                    data.AppendLine($"Fixation Position:    {eyeTrackerData.PosesData.FixationPose.Pose.position}");
+                    data.AppendLine($"Fixation Rotation:    {eyeTrackerData.PosesData.FixationPose.Pose.rotation}");
+                    data.AppendLine($"Fixation Duration:    {eyeTrackerData.PosesData.FixationPose.Time}");
+                    data.AppendLine($"Fixation Confidence:  {eyeTrackerData.PosesData.FixationPose.Confidence}");
+                    data.AppendLine($"Left_Eye Position:    {eyeTrackerData.PosesData.RightPose.Pose.position}");
+                    data.AppendLine($"Left_Eye Rotation:    {eyeTrackerData.PosesData.RightPose.Pose.rotation}");
+                    data.AppendLine($"Left_Eye Duration:    {eyeTrackerData.PosesData.RightPose.Time}");
+                    data.AppendLine($"Left_Eye Confidence:  {eyeTrackerData.PosesData.RightPose.Confidence}");
+                    data.AppendLine($"Right_Eye Position:   {eyeTrackerData.PosesData.LeftPose.Pose.position}");
+                    data.AppendLine($"Right_Eye Rotation:   {eyeTrackerData.PosesData.LeftPose.Pose.rotation}");
+                    data.AppendLine($"Right_Eye Duration:   {eyeTrackerData.PosesData.LeftPose.Time}");
+                    data.AppendLine($"Right_Eye Confidence: {eyeTrackerData.PosesData.LeftPose.Confidence}");
+
+                    ImageSaver.InitNewFrame(Time.frameCount, unityTime, deviceTime);
+					ImageSaver.SaveSensor(texture, $"eye{stream}", unityTime, deviceTime, sensorPose, data.ToString());
 				}
 			}
 			yield return null;
@@ -733,6 +780,8 @@ public class CombinedExample : MonoBehaviour
 		//We start the Coroutine on another MonoBehaviour since it can only run while the object is enabled.
 		MonoBehaviour camMono = Camera.main.GetComponent<MonoBehaviour>();
         camMono.StartCoroutine(StopSensorCoroutine());
+
+        eyeTrackerFeature?.DestroyEyeTracker();
     }
 
     private IEnumerator StopSensorCoroutine()
