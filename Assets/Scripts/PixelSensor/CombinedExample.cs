@@ -575,7 +575,7 @@ public class CombinedExample : MonoBehaviour
 
 					Debug.Log($"RGB Plane: w{plane.Width} h{plane.Height} d{plane.BytesPerPixel}");
 					if (texture == null)
-						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.R8, false);
+						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RGB24, false);
 					texture.LoadRawTextureData(plane.ByteData);
 					texture.Apply();
 
