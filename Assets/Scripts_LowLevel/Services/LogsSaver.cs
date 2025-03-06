@@ -14,6 +14,9 @@ public class LogsSaver : BaseService
         Application.quitting += Deinitialize;
     }
 
+    private void OnApplicationFocus(bool focus) => Deinitialize();
+    private void OnApplicationPause(bool pause) => Deinitialize();
+
     public override void Deinitialize()
     {
         string path = Path.Combine(Application.persistentDataPath, "img", "Logs.txt");
@@ -22,11 +25,16 @@ public class LogsSaver : BaseService
 
     private void Application_logMessageReceived(string condition, string stackTrace, LogType type)
 	{
-		Logs.AppendLine($"{Time.frameCount} [{type}]: {condition}");
-		if (type == LogType.Error)
+		if (type == LogType.Error || type == LogType.Assert || type == LogType.Exception)
         {
+            Logs.AppendLine();
+            Logs.AppendLine($"{Time.frameCount} [{type}]: {condition}");
             Logs.AppendLine(stackTrace);
             Logs.AppendLine();
+        }
+        else
+        {
+            Logs.AppendLine($"{Time.frameCount} [{type}]: {condition}");
         }
 	}
 }
