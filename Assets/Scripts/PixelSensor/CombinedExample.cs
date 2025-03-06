@@ -522,7 +522,6 @@ public class CombinedExample : MonoBehaviour
 			Debug.Log($"Eye Stream {streamIndex} available capabilities: {string.Join(", ", capabilities.Select(x => x.CapabilityType))}");
 		}
 
-
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensorWithDefaultCapabilities(
 			eyeSensorID.Value,
 			configuredEyeStreams.ToArray()
@@ -576,7 +575,7 @@ public class CombinedExample : MonoBehaviour
 
 					Debug.Log($"RGB Plane: w{plane.Width} h{plane.Height} d{plane.BytesPerPixel}");
 					if (texture == null)
-						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.Alpha8, false);
+						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.R8, false);
 					texture.LoadRawTextureData(plane.ByteData);
 					texture.Apply();
 
