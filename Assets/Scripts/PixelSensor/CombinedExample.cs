@@ -311,10 +311,10 @@ public class CombinedExample : MonoBehaviour
 		configuredWorldStreams.Clear();
 		if (streamCount > 0)
 			configuredWorldStreams.Add(0);
-		if (streamCount > 1)
-			configuredWorldStreams.Add(1);
+		//if (streamCount > 1)
+		//	configuredWorldStreams.Add(1);
 
-		Debug.Log("CombinedExample ConfigureWorldStreamsManually()");
+		//Debug.Log("CombinedExample ConfigureWorldStreamsManually()");
 		//if (pixelSensorFeature.GetSensorStatus(worldSensorID.Value) == PixelSensorStatus.NotConfigured)
 		//{
 		//	pixelSensorFeature.GetPixelSensorCapabilities(rgbSensorID.Value, 1, out PixelSensorCapability[] capabilities);
@@ -366,6 +366,7 @@ public class CombinedExample : MonoBehaviour
 
 	private IEnumerator StartWorldStream()
 	{
+        Debug.Log("CombinedExample ConfigureWorldStreamsManually()");
         var targetCapabilityTypes = new PixelSensorCapabilityType[]
         {
             PixelSensorCapabilityType.AutoExposureMode,
@@ -374,9 +375,6 @@ public class CombinedExample : MonoBehaviour
 
         foreach (uint streamIndex in configuredWorldStreams)
         {
-			if (streamIndex == 1)
-				continue; // Skip the second stream for now
-
             // Iterate through each of the target capabilities and try to find it in the sensors availible capabilities, then set it's value.
             // When configuring a sensor capabilities have to be configured iteratively since each applied configuration can impact other capabilities.
             // Step 1 : Itereate through each of the target capabilities
@@ -387,6 +385,8 @@ public class CombinedExample : MonoBehaviour
 
                 // Get the sensors capabilities based on the previous applied settings.
                 pixelSensorFeature.GetPixelSensorCapabilities(worldSensorID.Value, streamIndex, out PixelSensorCapability[] capabilities);
+				Debug.Log($"World Stream {streamIndex} available capabilities: {string.Join(", ", capabilities.Select(x => x.CapabilityType))}");
+
                 // Step2 Try to find a capability of the same type in the sensor
                 PixelSensorCapability targetAbility = capabilities.FirstOrDefault(x => x.CapabilityType == pixelSensorCapability);
                 // Verify that it was found - A null check would not work because it is a struct.
@@ -516,6 +516,13 @@ public class CombinedExample : MonoBehaviour
 	private IEnumerator StartEyeStream()
 	{
 		Debug.Log($"CombinedExample StartEyeStream");
+		foreach (uint streamIndex in configuredEyeStreams)
+		{	
+			pixelSensorFeature.GetPixelSensorCapabilities(eyeSensorID.Value, streamIndex, out PixelSensorCapability[] capabilities);
+			Debug.Log($"Eye Stream {streamIndex} available capabilities: {string.Join(", ", capabilities.Select(x => x.CapabilityType))}");
+		}
+
+
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensorWithDefaultCapabilities(
 			eyeSensorID.Value,
 			configuredEyeStreams.ToArray()
@@ -569,7 +576,7 @@ public class CombinedExample : MonoBehaviour
 
 					Debug.Log($"RGB Plane: w{plane.Width} h{plane.Height} d{plane.BytesPerPixel}");
 					if (texture == null)
-						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RGB24, false);
+						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.Alpha8, false);
 					texture.LoadRawTextureData(plane.ByteData);
 					texture.Apply();
 
