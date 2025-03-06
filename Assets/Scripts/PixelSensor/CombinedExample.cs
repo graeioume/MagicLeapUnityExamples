@@ -367,7 +367,7 @@ public class CombinedExample : MonoBehaviour
         var targetCapabilityTypes = new PixelSensorCapabilityType[]
         {
             PixelSensorCapabilityType.AutoExposureMode,
-            PixelSensorCapabilityType.AutoExposureTargetBrightness,
+            //PixelSensorCapabilityType.AutoExposureTargetBrightness,
         };
 
         foreach (uint streamIndex in configuredWorldStreams)
@@ -717,7 +717,7 @@ public class CombinedExample : MonoBehaviour
 
 					float unityTime = Time.realtimeSinceStartup;
 					DateTimeOffset deviceTime = DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
-					Pose sensorPose = pixelSensorFeature.GetSensorPose(eyeSensorID.Value);
+					Pose sensorPose = default; // pixelSensorFeature.GetSensorPose(eyeSensorID.Value);
 					ImageSaver.InitNewFrame(Time.frameCount, unityTime, deviceTime);
 					ImageSaver.SaveSensor(texture, $"eye{stream}", unityTime, deviceTime, sensorPose);
 				}
