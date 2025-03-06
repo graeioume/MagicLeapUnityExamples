@@ -374,10 +374,13 @@ public class CombinedExample : MonoBehaviour
 
         foreach (uint streamIndex in configuredWorldStreams)
         {
+			if (streamIndex == 1)
+				continue; // Skip the second stream for now
+
             // Iterate through each of the target capabilities and try to find it in the sensors availible capabilities, then set it's value.
-			// When configuring a sensor capabilities have to be configured iteratively since each applied configuration can impact other capabilities.
-			// Step 1 : Itereate through each of the target capabilities
-			for (var index = 0; index < targetCapabilityTypes.Length; index++)
+            // When configuring a sensor capabilities have to be configured iteratively since each applied configuration can impact other capabilities.
+            // Step 1 : Itereate through each of the target capabilities
+            for (var index = 0; index < targetCapabilityTypes.Length; index++)
             {
                 PixelSensorCapabilityType pixelSensorCapability = targetCapabilityTypes[index];
 				Debug.Log($"World Cam configuring {pixelSensorCapability} for stream {streamIndex}");
@@ -419,19 +422,22 @@ public class CombinedExample : MonoBehaviour
                                 pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, configData);
                                 yield return null;
                             }
-                        } else if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureTargetBrightness)
+                        } 
+						else if (range.CapabilityType == PixelSensorCapabilityType.AutoExposureTargetBrightness)
                         {
                             var configData = new PixelSensorConfigData(range.CapabilityType, streamIndex);
                             configData.FloatValue = Mathf.Clamp(AutoExposureTargetBrightness, range.FloatRange.Value.Min, range.FloatRange.Value.Max);
                             pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, configData);
                             yield return null;
-                        } else if (range.CapabilityType == PixelSensorCapabilityType.ManualExposureTime)
+                        } 
+						else if (range.CapabilityType == PixelSensorCapabilityType.ManualExposureTime)
                         {
                             var configData = new PixelSensorConfigData(range.CapabilityType, streamIndex);
                             configData.IntValue = (uint)Mathf.Clamp(ManualExposureTime, range.IntRange.Value.Min, range.IntRange.Value.Max);
                             pixelSensorFeature.ApplySensorConfig(worldSensorID.Value, configData);
                             yield return null;
-                        } else if (range.CapabilityType == PixelSensorCapabilityType.AnalogGain)
+                        }
+						else if (range.CapabilityType == PixelSensorCapabilityType.AnalogGain)
                         {
                             var configData = new PixelSensorConfigData(range.CapabilityType, streamIndex);
                             configData.IntValue = (uint)Mathf.Clamp((uint)AnalogGain, range.IntRange.Value.Min, range.IntRange.Value.Max);
@@ -561,8 +567,9 @@ public class CombinedExample : MonoBehaviour
 					if (!frame.IsValid || frame.Planes.Length == 0)
 						continue;
 
+					Debug.Log($"RGB Plane: w{plane.Width} h{plane.Height} d{plane.BytesPerPixel}");
 					if (texture == null)
-						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.ARGB32, false);
+						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RGB24, false);
 					texture.LoadRawTextureData(plane.ByteData);
 					texture.Apply();
 
