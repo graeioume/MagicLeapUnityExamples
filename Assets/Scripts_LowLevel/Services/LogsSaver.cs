@@ -12,7 +12,7 @@ public static class LogsSaver// : BaseService
     {
 		Logs = new StringBuilder(16384);
 		Application.logMessageReceived += Application_logMessageReceived;
-        Application.quitting += Deinitialize;
+        //Application.quitting += Deinitialize;
     }
 
     //private void OnApplicationFocus(bool focus) => Deinitialize();
