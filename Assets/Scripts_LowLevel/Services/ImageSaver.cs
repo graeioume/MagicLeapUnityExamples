@@ -2,19 +2,28 @@
 using System.IO;
 using UnityEngine;
 
-[GameService]
-public class ImageSaver : BaseService
+//[GameService]
+//public class ImageSaver : BaseService
+public static class ImageSaver// : BaseService
 {
 	private static int currentFrame = -1;
 	private static string currentFolderPath;
 
-    public override void Initialize()
+	public static bool initialized = false;
+    public static void Initialize()
     {
 		ClearImgFolder();
+		LogsSaver.Initialize();
     }
 
     public static void InitNewFrame(int frameCount, float frameTime, DateTimeOffset deviceTime)
 	{
+		if (!initialized)
+		{
+            Initialize();
+            initialized = true;
+        }
+
 		try
 		{
 			// Create a folder named after the current frame count
