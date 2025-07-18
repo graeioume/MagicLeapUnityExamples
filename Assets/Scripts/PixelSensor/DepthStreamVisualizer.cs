@@ -78,12 +78,12 @@ public class DepthStreamVisualizer : MonoBehaviour
 
     public Texture2D ProcessFrame(in PixelSensorFrame frame)
     {
-        if (!frame.IsValid || TargetRenderer == null || frame.Planes.Length == 0)
+        if (!frame.IsValid || !TargetRenderer || frame.Planes.Length == 0)
 			return null;
 
 		// You can obtain the capture time as well. Note it is returned as a long and needs to be converted.
 		// ie : DateTimeOffset.FromUnixTimeMilliseconds(frame.CaptureTime / 1000);
-		if (targetTexture == null)
+		if (!targetTexture)
         {
             var frameType = frame.FrameType;
             ref var plane = ref frame.Planes[0];
@@ -98,7 +98,8 @@ public class DepthStreamVisualizer : MonoBehaviour
 			TargetRenderer.material.SetTexture(depthFlagTextureKey, depthFlagColorKeyTexture);
 			TargetRenderer.material.SetTexture(metadataTextureKey, Texture2D.whiteTexture);
 		}
-       
+
+        Debug.LogError($"frameType {frame.FrameType},  frame.Planes.Length {frame.Planes.Length}", gameObject);
         targetTexture.LoadRawTextureData(frame.Planes[0].ByteData);
         targetTexture.Apply();
         return targetTexture;
@@ -107,10 +108,10 @@ public class DepthStreamVisualizer : MonoBehaviour
     public Texture2D ProcessDepthConfidenceData(in PixelSensorDepthConfidenceBuffer confidenceBuffer)
     {
         var frame = confidenceBuffer.Frame;
-        if (!frame.IsValid || TargetRenderer == null || frame.Planes.Length == 0)
+        if (!frame.IsValid || !TargetRenderer || frame.Planes.Length == 0)
 			return null;
 
-		if (depthConfidenceTexture == null)
+		if (!depthConfidenceTexture)
         {
             ref var plane = ref frame.Planes[0];
             depthConfidenceTexture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RFloat, false);
@@ -125,10 +126,10 @@ public class DepthStreamVisualizer : MonoBehaviour
     public Texture2D ProcessDepthFlagData(in PixelSensorDepthFlagBuffer flagBuffer)
     {
         var frame = flagBuffer.Frame;
-        if (!frame.IsValid || TargetRenderer == null || frame.Planes.Length == 0)
+        if (!frame.IsValid || !TargetRenderer || frame.Planes.Length == 0)
             return null;
 
-		if (depthFlagTexture == null)
+		if (!depthFlagTexture)
         {
             ref var plane = ref frame.Planes[0];
             depthFlagTexture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RFloat, false);

@@ -47,7 +47,7 @@ public class DepthCameraExample : MonoBehaviour
     void Start()
     {
         pixelSensorFeature = OpenXRSettings.Instance.GetFeature<MagicLeapPixelSensorFeature>();
-        if (pixelSensorFeature == null || !pixelSensorFeature.enabled)
+        if (!pixelSensorFeature || !pixelSensorFeature.enabled)
         {
             Debug.LogError("Pixel Sensor Feature not found or not enabled!");
             enabled = false;
