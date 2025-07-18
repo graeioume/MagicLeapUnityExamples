@@ -584,7 +584,7 @@ public class CombinedExample : MonoBehaviour
 						continue;
 
 					Debug.Log($"RGB Plane: w{plane.Width} h{plane.Height} d{plane.BytesPerPixel}");
-					if (texture == null)
+					if (!texture)
 						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.RGB24, false);
 					texture.LoadRawTextureData(plane.ByteData);
 					texture.Apply();
@@ -657,7 +657,7 @@ public class CombinedExample : MonoBehaviour
 					if (!frame.IsValid || frame.Planes.Length == 0)
 						continue;
 
-					if (texture == null)
+					if (!texture)
 						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.R8, false);
 					texture.LoadRawTextureData(plane.ByteData);
 					texture.Apply();
@@ -719,7 +719,7 @@ public class CombinedExample : MonoBehaviour
 					if (!frame.IsValid || frame.Planes.Length == 0)
 						continue;
 
-					if (texture == null)
+					if (!texture)
 					{
 						texture = new Texture2D((int)plane.Width, (int)plane.Height, TextureFormat.R8, false);
 						eyeTextures[stream] = texture;

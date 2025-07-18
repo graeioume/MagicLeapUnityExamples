@@ -14,7 +14,7 @@ public class DepthCameraExample : MonoBehaviour
     [Header("General Configuration")]
     public DepthStreamVisualizer streamVisualizer;
 
-    [Tooltip("If Tue will return a raw depth image. If False will return depth32")]
+    [Tooltip("If True: will return a raw depth image. If False: will return depth32")]
     public bool UseRawDepth;
 
     [Range(0.2f, 5.00f)] public float DepthRange;
@@ -267,6 +267,11 @@ public class DepthCameraExample : MonoBehaviour
                     }
                 }
 
+                if (pixelSensorFeature.GetSensorData(sensorId.Value, stream, out var depthrame, out var depthMetaData,
+                        Allocator.Temp, shouldFlipTexture: true))
+                {
+                    
+                }
                 yield return null;
             }
         }
