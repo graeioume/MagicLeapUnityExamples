@@ -99,7 +99,6 @@ public class DepthStreamVisualizer : MonoBehaviour
 			TargetRenderer.material.SetTexture(metadataTextureKey, Texture2D.whiteTexture);
 		}
 
-        Debug.LogError($"frameType {frame.FrameType},  frame.Planes.Length {frame.Planes.Length}", gameObject);
         targetTexture.LoadRawTextureData(frame.Planes[0].ByteData);
         targetTexture.Apply();
         return targetTexture;

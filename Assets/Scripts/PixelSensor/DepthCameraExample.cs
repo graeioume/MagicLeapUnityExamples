@@ -267,11 +267,6 @@ public class DepthCameraExample : MonoBehaviour
                     }
                 }
 
-                if (pixelSensorFeature.GetSensorData(sensorId.Value, stream, out var depthrame, out var depthMetaData,
-                        Allocator.Temp, shouldFlipTexture: true))
-                {
-                    
-                }
                 yield return null;
             }
         }
