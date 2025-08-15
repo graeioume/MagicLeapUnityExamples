@@ -9,6 +9,7 @@ using System.Text;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.XR.MagicLeap;
 using UnityEngine.XR.OpenXR;
 
 
@@ -49,7 +50,8 @@ public class CombinedExample : MonoBehaviour
     void Start()
     {
 		Debug.Log($"CombinedExample Start frame: {Time.frameCount} go: {gameObject}");
-
+		Debug.LogError("MLDepthCamera.Connect: "+ MLDepthCamera.Connect());;
+		
         // gets Pixel Sensor Feature, basic object to access all pixel sensors
         pixelSensorFeature = OpenXRSettings.Instance.GetFeature<MagicLeapPixelSensorFeature>();
         if (pixelSensorFeature == null || !pixelSensorFeature.enabled)
@@ -89,6 +91,8 @@ public class CombinedExample : MonoBehaviour
 
     private void InitSensors()
     {
+	    StartCoroutine(MonitorDepthSensorRaw());
+
 		Debug.Log($"CombinedExample InitSensors");
 		foreach (PixelSensorId sensor in pixelSensorFeature.GetSupportedSensors())
         {
@@ -116,29 +120,33 @@ public class CombinedExample : MonoBehaviour
 
 		// Subscribe to the Availability changed callback if the sensor becomes available.
 		pixelSensorFeature.OnSensorAvailabilityChanged += (PixelSensorId id, bool available) => {
-			if (rgbSensorID.HasValue && id == rgbSensorID && available)
-				TryInitializeRGBSensor();
-			if (depthSensorID.HasValue && id == depthSensorID && available)
-				TryInitializeDepthSensor();
-			if (worldSensorID.HasValue && id == worldSensorID && available)
-				TryInitializeWorldSensor();
-			if (eyeSensorID.HasValue && id == eyeSensorID && available)
-				TryInitializeEyeSensor();
+			// if (rgbSensorID.HasValue && id == rgbSensorID && available)
+				// TryInitializeRGBSensor();
+			// if (depthSensorID.HasValue && id == depthSensorID && available)
+				// TryInitializeDepthSensor();
+			// if (worldSensorID.HasValue && id == worldSensorID && available)
+				// TryInitializeWorldSensor();
+			// if (eyeSensorID.HasValue && id == eyeSensorID && available)
+				// TryInitializeEyeSensor();
 		};
 
-		if (rgbSensorID.HasValue)
-			TryInitializeRGBSensor();
-		if (depthSensorID.HasValue)
-			TryInitializeDepthSensor();
-		if (worldSensorID.HasValue)
-			TryInitializeWorldSensor();
-		if (eyeSensorID.HasValue)
-			TryInitializeEyeSensor();
+		// if (rgbSensorID.HasValue)
+			// TryInitializeRGBSensor();
+		// if (worldSensorID.HasValue)
+			// TryInitializeWorldSensor();
+		// if (eyeSensorID.HasValue)
+			// TryInitializeEyeSensor();
 	}
 
 	private void TryInitializeRGBSensor()
     {
 		Debug.Log($"CombinedExample TryInitializeRGBSensor");
+		if (rgbSensorID == null)
+		{
+			Debug.LogError($"rgbSensorID is null in TryInitializeRGBSensor()", this);
+			return;
+		}
+
 		PixelSensorStatus statuc = pixelSensorFeature.GetSensorStatus(rgbSensorID.Value);
 		if (statuc != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(rgbSensorID.Value))
 		{
@@ -218,6 +226,12 @@ public class CombinedExample : MonoBehaviour
 	private void TryInitializeDepthSensor()
     {
 		Debug.Log($"CombinedExample TryInitializeDepthSensor");
+		if (depthSensorID == null)
+		{
+			Debug.LogError($"depthSensorID is null in StartDepthStream()", this);
+			return;
+		}
+
 		PixelSensorStatus statuc = pixelSensorFeature.GetSensorStatus(depthSensorID.Value);
 		if (statuc != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(depthSensorID.Value))
 		{
@@ -273,6 +287,12 @@ public class CombinedExample : MonoBehaviour
 	private IEnumerator StartDepthStream()
 	{
 		Debug.Log($"CombinedExample StartDepthStream");
+		if (depthSensorID == null)
+		{
+			Debug.LogError($"depthSensorID is null in StartDepthStream()", this);
+			yield break;
+		}
+
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensor(depthSensorID.Value, configuredDepthStreams);
 
 		yield return configureOperation;
@@ -305,6 +325,12 @@ public class CombinedExample : MonoBehaviour
 	private void TryInitializeWorldSensor()
 	{
 		Debug.Log("CombinedExample TryInitializeWorldSensor");
+		if (worldSensorID == null)
+		{
+			Debug.LogError($"worldSensorID is null in StartDepthStream()", this);
+			return;
+		}
+
 		PixelSensorStatus statuc = pixelSensorFeature.GetSensorStatus(worldSensorID.Value);
 		if (statuc != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(worldSensorID.Value))
 		{
@@ -392,6 +418,11 @@ public class CombinedExample : MonoBehaviour
             {
                 PixelSensorCapabilityType pixelSensorCapability = targetCapabilityTypes[index];
 				Debug.Log($"World Cam configuring {pixelSensorCapability} for stream {streamIndex}");
+				if (worldSensorID == null)
+				{
+					Debug.LogError($"worldSensorID is null in StartDepthStream()", this);
+					yield break;
+				}
 
                 // Get the sensors capabilities based on the previous applied settings.
                 pixelSensorFeature.GetPixelSensorCapabilities(worldSensorID.Value, streamIndex, out PixelSensorCapability[] capabilities);
@@ -460,6 +491,12 @@ public class CombinedExample : MonoBehaviour
         }
 
         Debug.Log("CombinedExample Calling ConfigureSensor for World sensor...");
+        if (worldSensorID == null)
+        {
+	        Debug.LogError($"worldSensorID is null in StartDepthStream()", this);
+	        yield break;
+        }
+
 		PixelSensorAsyncOperationResult configureOperation = pixelSensorFeature.ConfigureSensor(worldSensorID.Value, configuredWorldStreams.ToArray());
 		yield return configureOperation;
 
@@ -499,6 +536,12 @@ public class CombinedExample : MonoBehaviour
 	private void TryInitializeEyeSensor()
 	{
 		Debug.Log($"CombinedExample TryInitializeEyeSensor");
+		if (eyeSensorID == null)
+		{
+			Debug.LogError($"eyeSensorID is null in TryInitializeEyeSensor()", this);
+			return;
+		}
+
 		PixelSensorStatus statuc = pixelSensorFeature.GetSensorStatus(eyeSensorID.Value);
 		if (statuc != PixelSensorStatus.Undefined || !pixelSensorFeature.CreatePixelSensor(eyeSensorID.Value))
 		{
@@ -526,6 +569,12 @@ public class CombinedExample : MonoBehaviour
 	private IEnumerator StartEyeStream()
 	{
 		Debug.Log($"CombinedExample StartEyeStream");
+		if (eyeSensorID == null)
+		{
+			Debug.LogError($"eyeSensorID is null in StartEyeStream()", this);
+			yield break;
+		}
+
 		foreach (uint streamIndex in configuredEyeStreams)
 		{	
 			pixelSensorFeature.GetPixelSensorCapabilities(eyeSensorID.Value, streamIndex, out PixelSensorCapability[] capabilities);
@@ -601,14 +650,67 @@ public class CombinedExample : MonoBehaviour
 		}
 	}
 
+	private IEnumerator MonitorDepthSensorRaw()
+	{
+		// Debug.LogError($"MLDepthCamera.IsConnected: {MLDepthCamera.IsConnected} in MonitorDepthSensorRaw", this); // not a real error
+		var settings = MLDepthCamera.CurrentSettings;
+		settings.Streams = MLDepthCamera.Stream.ShortRange;
+		var streamConfig = settings.StreamConfig[(int)MLDepthCamera.FrameType.ShortRange];
+		Debug.LogError("Flags: " + streamConfig.Flags);
+		Debug.LogError("FrameRateConfig: " + streamConfig.FrameRateConfig);
+		Debug.LogError("Exposure: " + streamConfig.Exposure);
+
+		MLDepthCamera.SetSettings(settings);
+		MLDepthCamera.UpdateSettings(settings);
+
+		// while (true)
+		// {
+		// 	if (MLDepthCamera.IsConnected)
+		// 	{
+		// 		// Debug.LogError("MLDepthCamera.CurrentSettings: " + settings.ToString());
+		// 		// Debug.LogError("MLDepthCamera.CurrentSettings.Streams: " + settings.Streams);
+		// 	// 	var result = MLDepthCamera.GetLatestDepthData(1000, out MLDepthCamera.Data data);
+		// 	// 	if (result == MLResult.Code.Timeout)
+		// 	// 		continue;
+		// 	// 	Debug.LogError("GetLatestDepthData: " + result);
+		// 	// 	Debug.LogError( // not a real error
+		// 	// 		$"DepthImage {data.DepthImage.HasValue}, " +
+		// 	// 		$"RawDepthImage {data.RawDepthImage.HasValue}, " +
+		// 	// 		$"AmbientRawDepthImage {data.AmbientRawDepthImage.HasValue}");
+		// 	}
+		//
+		// 	yield return new WaitForSeconds(1f);
+		// }
+		yield break;
+	}
+
 	private IEnumerator MonitorDepthSensor()
     {
 		Debug.Log($"CombinedExample MonitorDepthSensor");
+		if (depthSensorID == null)
+		{
+			Debug.LogError($"depthSensorID is null in MonitorDepthSensor()", this);
+			yield break;
+		}
+		
 		Quaternion frameRotation = pixelSensorFeature.GetSensorFrameRotation(depthSensorID.Value);
 
         streamVisualizer.Initialize(depthRangeToUse, frameRotation, pixelSensorFeature, depthSensorID.Value);
         while (pixelSensorFeature.GetSensorStatus(depthSensorID.Value) == PixelSensorStatus.Started)
         {
+	        Debug.LogError($"MLDepthCamera.IsConnected: {MLDepthCamera.IsConnected} in ReferenceSpaceToggle Start", this); // not a real error
+	        if (MLDepthCamera.IsConnected)
+	        {
+		        MLDepthCamera.GetLatestDepthData(1000,out MLDepthCamera.Data data);
+		        Debug.LogError( // not a real error
+			        $"DepthImage {data.DepthImage.HasValue}, " +
+			        $"RawDepthImage {data.RawDepthImage.HasValue}, " +
+			        $"AmbientRawDepthImage {data.AmbientRawDepthImage.HasValue}");
+	        }
+	        else
+	        {
+		        Debug.LogError($"MLDepthCamera not connected yet", this); // not a real errorS
+	        }
             foreach (uint stream in configuredDepthStreams)
             {
 				Debug.Log($"CombinedExample MonitorDepthSensor {stream}");

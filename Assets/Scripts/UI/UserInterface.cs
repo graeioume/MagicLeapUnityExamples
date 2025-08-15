@@ -241,16 +241,22 @@ namespace MagicLeap.Examples
         {
             if (type == LogType.Error)
             {
-                AddIssue(FormatText(condition));
-
-                // Only show the issues button, if an error is reported.
+                AddIssue(FormatErrorText(condition));
+                
+                 // Only show the issues button, if an error is reported.
                 StartCoroutine(SendErrorNotifications());
             }
+            // else
+            // {
+            //     AddIssue(condition);
+            // }
+
+            
         }
 
         public void QuitApplication() => Application.Quit();
 
-        private string FormatText(string text)
+        private string FormatErrorText(string text)
         {
             if (text.Contains("Error:"))
             {
