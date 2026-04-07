@@ -96,7 +96,8 @@ namespace MagicLeap.Examples
             }
 
             sb.AppendLine("\n");
-
+            
+            // Updates the status and data for all actively tracked marker detectors.
             markerFeature.UpdateMarkerDetectors();
 
             int trackerIndex = 0;
@@ -106,12 +107,14 @@ namespace MagicLeap.Examples
                 sb.AppendLine($"Detected markers: {markerDetector.Data.Count}");
                 sb.AppendLine();
 
-                int expectedVisualCount = markerDetector.Data.Where(d => d.MarkerPose != null).Count();
+                // Find how many marker detectors will need visual representations
+                int expectedVisualCount = markerDetector.Data.Count(d => d.MarkerPose != null);
                 if (expectedVisualCount > 0 && !markerVisuals.ContainsKey(markerDetector))
                 {
                     markerVisuals.Add(markerDetector, new HashSet<MarkerVisualizer>());
                 }
 
+                // If there are more visuals than we will need representations for, destroy all visuals for this marker detector
                 if (markerVisuals.TryGetValue(markerDetector, out var currentVisualSet))
                 {
                     if (currentVisualSet.Count > expectedVisualCount)
@@ -121,7 +124,7 @@ namespace MagicLeap.Examples
                         currentVisualSet.Clear();
                     }
                 }
-
+                
                 for (int i = 0; i < markerDetector.Data.Count; i++)
                 {
                     if (markerDetector.Data[i].MarkerPose != null)
