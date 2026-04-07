@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: Magic Leap
-  productName: Magic Leap Unity Examples
+  productName: Magic Leap AprilTag Tracking
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -145,6 +145,9 @@ PlayerSettings:
   bundleVersion: 2.0
   preloadedAssets:
   - {fileID: -944628639613478452, guid: bb4daeceea261404d9e9069323220d1b, type: 3}
+  - {fileID: 200753018772540543, guid: 583a29f9e3f74304d869096f91238eb6, type: 2}
+  - {fileID: 11400000, guid: e3e2ec0a2d235bf4e88abaa1456abb78, type: 2}
+  - {fileID: -4634743487577735018, guid: a782bb31a8a1ac64eb575277bdfdecfe, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -165,7 +168,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: com.magicleap.unity.examples
+    Android: com.magicleap.unity.AprilTag
     Standalone: com.Unity-Technologies.com.unity.template.urp-blank
     iPhone: com.Unity-Technologies.com.unity.template.urp-blank
   buildNumber:
