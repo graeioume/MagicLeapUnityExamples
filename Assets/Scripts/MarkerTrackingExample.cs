@@ -166,8 +166,8 @@ namespace MagicLeap.Examples
 
         void OnDestroy()
         {
-            destroyAllButton.onClick.RemoveAllListeners();
-            markerDetectorTypeDropdown.onValueChanged.RemoveAllListeners();
+            destroyAllButton?.onClick.RemoveAllListeners();
+            markerDetectorTypeDropdown?.onValueChanged.RemoveAllListeners();
             DestroyMarkerTrackers();
         }
 
