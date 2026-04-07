@@ -17,29 +17,13 @@ namespace MagicLeap.Examples
 
             stringBuilder.Append($"MarkerLength: {markerData.MarkerLength}\n");
 
-            switch (currentMarkerType)
-            {
-                case MarkerType.QR:
-                case MarkerType.Code128:
-                case MarkerType.EAN13:
-                case MarkerType.UPCA:
-                    stringBuilder.Append($"MarkerString: {markerData.MarkerString}\n");
-                    break;
-                default:
-                    stringBuilder.Append($"MarkerNumber: {markerData.MarkerNumber}\n");
-                    stringBuilder.Append($"ReprojectionErrorMeters: {markerData.ReprojectionErrorMeters}\n");
-                    break;
-            }
+     
+            stringBuilder.Append($"MarkerNumber: {markerData.MarkerNumber}\n");
+            stringBuilder.Append($"ReprojectionErrorMeters: {markerData.ReprojectionErrorMeters}\n");
 
-            switch (currentMarkerType)
-            {
-                case MarkerType.Aruco:
-                case MarkerType.QR:
-                case MarkerType.AprilTag:
-                    stringBuilder.Append($"Position: {markerData.MarkerPose?.position}\n");
-                    stringBuilder.Append($"Rotation: {markerData.MarkerPose?.rotation}");
-                    break;
-            }
+            stringBuilder.Append($"Position: {markerData.MarkerPose?.position}\n");
+            stringBuilder.Append($"Rotation: {markerData.MarkerPose?.rotation}");
+
 
             dataText.text = stringBuilder.ToString();
 

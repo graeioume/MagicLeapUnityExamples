@@ -14,6 +14,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.OpenXR;
 using MagicLeap.OpenXR.Features.MarkerUnderstanding;
+using UnityEngine.XR.MagicLeap.AprilTagTracking;
 
 namespace MagicLeap.Examples
 {
@@ -25,10 +26,13 @@ namespace MagicLeap.Examples
         [SerializeField]
         private Text statusTextDisplay;
 
-
-        private Dictionary<MarkerDetector, HashSet<MarkerVisualizer>> markerVisuals = new();
+        [SerializeField] TrackerObject pointerTrackerObject;
+        // private Dictionary<MarkerDetector, HashSet<MarkerVisualizer>> markerVisuals = new();
         private MagicLeapMarkerUnderstandingFeature markerFeature;
         private MarkerDetectorSettings markerDetectorSettings;
+        private MarkerDetector markerDetector;
+        private HashSet<MarkerVisualizer> currentVisualSet;
+        
 
         void Start()
         {
@@ -42,7 +46,7 @@ namespace MagicLeap.Examples
             markerFeature = OpenXRSettings.Instance.GetFeature<MagicLeapMarkerUnderstandingFeature>();
             markerFeature.CreateMarkerDetector(markerDetectorSettings);
             markerFeature.UpdateMarkerDetectors();
-            markerVisuals = new Dictionary<MarkerDetector, HashSet<MarkerVisualizer>>();
+            currentVisualSet = new HashSet<MarkerVisualizer>();
         }
 
         void Update()
@@ -54,100 +58,70 @@ namespace MagicLeap.Examples
             
             if (markerFeature.MarkerDetectors.Count == 0)
             {
-                statusTextDisplay.text = sb.ToString();
+                // statusTextDisplay.text = sb.ToString();
                 return;
             }
 
-            sb.AppendLine("\n");
+            // sb.AppendLine("\n");
             
             // Updates the status and data for all actively tracked marker detectors.
-            markerFeature.UpdateMarkerDetectors();
+            markerFeature.UpdateMarkerDetectors(); // TODO: do we need this?
 
-            int trackerIndex = 0;
-            foreach (var markerDetector in markerFeature.MarkerDetectors)
+            // int trackerIndex = 0;
+            // sb.AppendLine($"<b>#{trackerIndex} {markerDetector.Settings.MarkerType}/{markerDetector.Settings.MarkerDetectorProfile}</b>");
+            // sb.AppendLine($"Detected markers: {markerDetector.Data.Count}");
+            // sb.AppendLine();
+
+            // Find how many marker detectors will need visual representations
+            int expectedVisualCount = markerDetector.Data.Count(d => d.MarkerPose != null);
+
+
+            // If there are more visuals than we will need representations for, destroy all visuals for this marker detector
+            if (currentVisualSet.Count > expectedVisualCount)
             {
-                sb.AppendLine($"<b>#{trackerIndex} {markerDetector.Settings.MarkerType}/{markerDetector.Settings.MarkerDetectorProfile}</b>");
-                sb.AppendLine($"Detected markers: {markerDetector.Data.Count}");
-                sb.AppendLine();
-
-                // Find how many marker detectors will need visual representations
-                int expectedVisualCount = markerDetector.Data.Count(d => d.MarkerPose != null);
-                if (expectedVisualCount > 0 && !markerVisuals.ContainsKey(markerDetector))
-                {
-                    markerVisuals.Add(markerDetector, new HashSet<MarkerVisualizer>());
-                }
-
-                // If there are more visuals than we will need representations for, destroy all visuals for this marker detector
-                if (markerVisuals.TryGetValue(markerDetector, out var currentVisualSet))
-                {
-                    if (currentVisualSet.Count > expectedVisualCount)
-                    {
-                        foreach (var visual in currentVisualSet)
-                            Destroy(visual.gameObject);
-                        currentVisualSet.Clear();
-                    }
-                }
-                
-                for (int i = 0; i < markerDetector.Data.Count; i++)
-                {
-                    if (markerDetector.Data[i].MarkerPose != null)
-                    {
-                        var markerVisual = Instantiate(markerVisualPrefab);
-                        if (currentVisualSet != null)
-                        {
-                            currentVisualSet.Add(markerVisual);
-                        }
-                        markerVisual.Set(markerDetector.Data[i], markerDetector.Settings.MarkerType);
-                    }
-                    sb.AppendLine($"<b>Marker {i}</b>");
-
-                    if (markerDetector.Settings.MarkerType == MarkerType.Aruco || markerDetector.Settings.MarkerType == MarkerType.AprilTag)
-                    {
-                        sb.AppendLine($"Data: {markerDetector.Data[i].MarkerNumber}");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"Data: {markerDetector.Data[i].MarkerString}");
-                    }
-
-                    sb.AppendLine($"Length: {markerDetector.Data[i].MarkerLength}");
-
-                    if (markerDetector.Settings.MarkerType == MarkerType.QR)
-                    {
-                        sb.AppendLine($"Reprojection Error: {markerDetector.Data[i].ReprojectionErrorMeters}");
-                    }
-                }
-
-                if (trackerIndex < markerFeature.MarkerDetectors.Count - 1)
-                    sb.AppendLine("--------\n");
-
-                trackerIndex++;
+                foreach (var visual in currentVisualSet)
+                    Destroy(visual.gameObject);
+                currentVisualSet.Clear();
             }
 
-            statusTextDisplay.text = sb.ToString();
-        }
 
-        void OnDestroy()
-        {
-            DestroyMarkerTrackers();
-        }
-
-
-        private void DestroyMarkerTrackers()
-        {
-            foreach (var markerDetector in markerFeature.MarkerDetectors)
+            for (int i = 0; i < markerDetector.Data.Count; i++)
             {
-                if (markerVisuals.TryGetValue(markerDetector, out var visuals))
+                if (markerDetector.Data[i].MarkerPose != null)
                 {
-                    foreach (var visual in visuals)
+                    var markerVisual = Instantiate(markerVisualPrefab);
+                    currentVisualSet?.Add(markerVisual);
+                    markerVisual.Set(markerDetector.Data[i], markerDetector.Settings.MarkerType);
+                    if (markerDetector.Data[i].MarkerNumber == 0)
                     {
-                        Destroy(visual.gameObject);
+                        pointerTrackerObject.SetMarkerPose(markerDetector.Data[i].MarkerPose);
                     }
-                    visuals.Clear();
                 }
             }
-            markerVisuals.Clear();
-            markerFeature.DestroyAllMarkerDetectors();
+            // statusTextDisplay.text = sb.ToString();
         }
+
+        // void OnDestroy()
+        // {
+        //     DestroyMarkerTrackers();
+        // }
+
+
+        // private void DestroyMarkerTrackers()
+        // {
+        //     foreach (var markerDetector in markerFeature.MarkerDetectors)
+        //     {
+        //         if (markerVisuals.TryGetValue(markerDetector, out var visuals))
+        //         {
+        //             foreach (var visual in visuals)
+        //             {
+        //                 Destroy(visual.gameObject);
+        //             }
+        //             visuals.Clear();
+        //         }
+        //     }
+        //     markerVisuals.Clear();
+        //     markerFeature.DestroyAllMarkerDetectors();
+        // }
     }
 }
